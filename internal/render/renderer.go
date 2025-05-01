@@ -71,7 +71,7 @@ func (r *Renderer) RenderPage(page content.Page, outputPath string) error {
 	}
 
 	// Execute template
-	return tmpl.ExecuteTemplate(f, "base", data)
+	return tmpl.Execute(f, data)
 }
 
 // RenderList renders a list page (e.g., index, tag list)
@@ -103,7 +103,7 @@ func (r *Renderer) RenderList(title string, pages []content.Page, outputPath str
 	}
 
 	// Execute template
-	return tmpl.ExecuteTemplate(f, "base", data)
+	return tmpl.Execute(f, data)
 }
 
 // RenderHome renders the home page
@@ -133,5 +133,5 @@ func (r *Renderer) RenderHome(pages []content.Page, outputPath string) error {
 	}
 
 	// Execute template
-	return tmpl.ExecuteTemplate(f, "base", data)
+	return tmpl.Execute(f, data)
 }

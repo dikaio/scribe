@@ -51,39 +51,53 @@ func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 		}
 	}
 
-	// Load template files (theme first, then site layouts for overrides)
-	templatePaths := []string{baseTemplatePath}
-
-	// Load templates from theme
+	// Create a map to hold layout templates keyed by name
+	layoutTemplates := make(map[string][]string)
+	
+	// Add base template to each layout
+	layoutTemplates["base"] = []string{baseTemplatePath}
+	
+	// Collect theme templates
 	themeLayoutFiles, err := filepath.Glob(filepath.Join(themePath, "*.html"))
 	if err == nil {
 		for _, file := range themeLayoutFiles {
 			if file != baseTemplatePath {
-				templatePaths = append(templatePaths, file)
+				name := filepath.Base(file)
+				name = strings.TrimSuffix(name, filepath.Ext(name))
+				if _, exists := layoutTemplates[name]; !exists {
+					layoutTemplates[name] = []string{baseTemplatePath}
+				}
+				layoutTemplates[name] = append(layoutTemplates[name], file)
 			}
 		}
 	}
-
-	// Load templates from site (overrides theme templates)
+	
+	// Collect site templates (overrides)
 	siteLayoutFiles, err := filepath.Glob(filepath.Join(siteLayoutPath, "*.html"))
 	if err == nil {
 		for _, file := range siteLayoutFiles {
 			if file != baseTemplatePath {
-				templatePaths = append(templatePaths, file)
+				name := filepath.Base(file)
+				name = strings.TrimSuffix(name, filepath.Ext(name))
+				if _, exists := layoutTemplates[name]; !exists {
+					layoutTemplates[name] = []string{baseTemplatePath}
+				}
+				// Site templates override theme templates, so we replace instead of append
+				// First keep the base template
+				baseTemplate := layoutTemplates[name][0]
+				layoutTemplates[name] = []string{baseTemplate, file}
 			}
 		}
 	}
-
-	// Parse all templates
-	tmpl, err := template.New(filepath.Base(baseTemplatePath)).Funcs(funcMap).ParseFiles(templatePaths...)
-	if err != nil {
-		return err
-	}
-
-	// Store templates
-	for _, path := range templatePaths {
-		name := filepath.Base(path)
-		name = strings.TrimSuffix(name, filepath.Ext(name))
+	
+	// Parse all template combinations
+	for name, files := range layoutTemplates {
+		// Parse the template set
+		tmpl, err := template.New(filepath.Base(files[0])).Funcs(funcMap).ParseFiles(files...)
+		if err != nil {
+			return fmt.Errorf("error parsing template %s: %v", name, err)
+		}
+		
 		tm.templates[name] = tmpl
 	}
 
