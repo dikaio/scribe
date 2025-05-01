@@ -223,6 +223,8 @@ The following optimizations could bring Scribes performance to match or exceed H
 - [ ] **Binary Template Storage**: Store compiled templates in binary format for faster loading
 - [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible
 - [ ] **Write comprehensive documentation**: Outline the design, architecture, and usage of Scribes
+- [ ] RSS Feeds
+- [ ] CI/CD Pipeline
 
 #### Planned
 
@@ -233,6 +235,10 @@ Optimizations we're actively working on:
 - [ ] Implement plugin architecture
 - [ ] Build additional themes
 - [ ] Add support for advanced content features like series and custom taxonomies
+- [ ] Responsive Images
+- [ ] Sitemap generation
+- [ ] SEO Optimizations
+- [ ] Performance Profiling and Monitoring
 
 ## Contributing
 
