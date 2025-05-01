@@ -188,7 +188,7 @@ To override a theme's templates:
 Based on our benchmarking:
 
 | Content Size | Build Time (Parallelized) |
-|--------------|---------------------------|
+| ------------ | ------------------------- |
 | 100 pages    | ~19ms                     |
 | 500 pages    | ~71ms                     |
 | 1000 pages   | ~115ms                    |
@@ -206,9 +206,9 @@ Our implementation is significantly faster than most JavaScript and Ruby-based g
   The key advantage remains that we achieved this with zero external dependencies, using only
   Go's standard library, which is quite impressive for the performance level we've reached.
 
-### Performance Roadmap
+### Roadmap
 
-#### Proposed Optimizations
+#### Proposed
 
 The following optimizations could bring Scribes performance to match or exceed Hugo:
 
@@ -221,13 +221,17 @@ The following optimizations could bring Scribes performance to match or exceed H
 - [ ] **Output Caching**: Cache rendered HTML for pages that haven't changed
 - [ ] **Lazy Loading**: Only load dependencies when needed rather than upfront
 - [ ] **Binary Template Storage**: Store compiled templates in binary format for faster loading
-- [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible
+- [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible1. Write comprehensive documentation
 
-#### Planned Optimizations
+#### Planned
 
 Optimizations we're actively working on:
 
 - [x] **Parallel Processing**: Loading and processing content in parallel with worker pools
+- [ ] Add more test coverage for all components
+- [ ] Implement plugin architecture
+- [ ] Build additional themes
+- [ ] Add support for advanced content features like series and custom taxonomies
 
 ## Contributing
 
