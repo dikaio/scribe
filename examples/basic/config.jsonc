@@ -1,0 +1,14 @@
+{
+	"title": "Basic Scribes Example",
+	"baseURL": "http://example.org/",
+	"theme": "default",
+	"language": "en",
+	"contentDir": "content",
+	"layoutDir": "layouts",
+	"staticDir": "static",
+	"outputDir": "public",
+	"author": "Scribes User",
+	"description": "A basic Scribes example site",
+	"summaryLength": 70,
+	"tags": ["example", "tutorial"]
+}
