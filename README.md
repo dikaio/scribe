@@ -203,6 +203,29 @@ Based on our measured performance with 500 markdown files:
   The key advantage remains that we achieved this with zero external dependencies, using only
   Go's standard library, which is quite impressive for the performance level we've reached.
 
+### Performance Roadmap
+
+#### Proposed Optimizations
+
+The following optimizations could bring Scribes performance to match or exceed Hugo:
+
+- [ ] **Memory Pooling**: Implement object pools for frequently created/destroyed objects to reduce GC pressure
+- [ ] **Incremental Builds**: Add file modification time tracking to only rebuild changed content
+- [ ] **Template Caching**: Pre-compile and cache templates rather than loading them on each build
+- [ ] **Custom Markdown Parser**: Replace our regex-based parser with a more optimized implementation
+- [ ] **Concurrent File I/O**: Use async I/O patterns to overlap CPU and I/O work
+- [ ] **Optimized Front Matter Parsing**: Replace our YAML parser with a faster implementation
+- [ ] **Output Caching**: Cache rendered HTML for pages that haven't changed
+- [ ] **Lazy Loading**: Only load dependencies when needed rather than upfront
+- [ ] **Binary Template Storage**: Store compiled templates in binary format for faster loading
+- [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible
+
+#### Planned Optimizations
+
+Optimizations we're actively working on:
+
+- [x] **Parallel Processing**: Loading and processing content in parallel with worker pools
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
