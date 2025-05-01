@@ -221,7 +221,8 @@ The following optimizations could bring Scribes performance to match or exceed H
 - [ ] **Output Caching**: Cache rendered HTML for pages that haven't changed
 - [ ] **Lazy Loading**: Only load dependencies when needed rather than upfront
 - [ ] **Binary Template Storage**: Store compiled templates in binary format for faster loading
-- [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible1. Write comprehensive documentation
+- [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible
+- [ ] **Write comprehensive documentation**: Outline the design, architecture, and usage of Scribes
 
 #### Planned
 
