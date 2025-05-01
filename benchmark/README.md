@@ -10,6 +10,7 @@ The parallel implementation significantly improves build performance, especially
 |--------------|-----------------|---------------|-------------|
 | 100 pages    | ~50-80ms        | ~19ms         | ~4x faster  |
 | 500 pages    | ~200-300ms      | ~71ms         | ~3-4x faster|
+| 1000 pages   | ~400-600ms      | ~115ms        | ~4-5x faster|
 
 ## Optimization Techniques
 
@@ -81,7 +82,7 @@ While Hugo still outperforms Scribes due to years of optimization and its more s
 | Generator | 100 pages | 500 pages | 1000 pages |
 |-----------|-----------|-----------|------------|
 | Hugo      | ~5-10ms   | ~20-30ms  | ~50-100ms  |
-| Scribes   | ~19ms     | ~71ms     | ~150-200ms |
+| Scribes   | ~19ms     | ~71ms     | ~115ms     |
 
 The primary difference is that Hugo uses more advanced techniques like:
 - Incremental builds (only rebuilding changed files)

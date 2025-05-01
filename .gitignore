@@ -30,6 +30,7 @@ bin/
 dist/
 build/
 public/
+benchmark/
 
 # Environment variables
 .env

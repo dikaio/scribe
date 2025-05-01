@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// How many files to generate
-	numFiles := 500 // Generate 500 files for a more substantial benchmark
+	numFiles := 1000 // Generate 1000 files for a comprehensive benchmark
 
 	// Base directory for posts
 	postsDir := filepath.Join("content", "posts")
