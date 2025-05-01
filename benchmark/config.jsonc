@@ -1,0 +1,13 @@
+{
+  "title": "Benchmark Site",
+  "baseURL": "http://example.com/",
+  "theme": "default",
+  "language": "en",
+  "contentDir": "content",
+  "layoutDir": "layouts",
+  "staticDir": "static",
+  "outputDir": "public",
+  "author": "Benchmarker",
+  "description": "A site for benchmarking Scribes",
+  "summaryLength": 70
+}

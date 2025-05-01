@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
+	"time"
 
 	"github.com/dikaio/scribes/internal/config"
 	"github.com/dikaio/scribes/internal/content"
@@ -32,15 +34,22 @@ func NewBuilder(cfg config.Config) *Builder {
 
 // Build builds the site
 func (b *Builder) Build(sitePath string) error {
+	totalStart := time.Now()
+	fmt.Println("Building site...")
+
 	// Initialize renderer
+	start := time.Now()
 	if err := b.renderer.Init(sitePath); err != nil {
 		return err
 	}
+	fmt.Printf("Renderer initialized in %v\n", time.Since(start))
 
 	// Load content
+	start = time.Now()
 	if err := b.loadContent(sitePath); err != nil {
 		return err
 	}
+	fmt.Printf("Content loaded in %v (%d pages)\n", time.Since(start), len(b.pages))
 
 	// Create output directory
 	outputPath := filepath.Join(sitePath, b.config.OutputDir)
@@ -49,33 +58,44 @@ func (b *Builder) Build(sitePath string) error {
 	}
 
 	// Copy static files
+	start = time.Now()
 	if err := b.copyStaticFiles(sitePath, outputPath); err != nil {
 		return err
 	}
+	fmt.Printf("Static files copied in %v\n", time.Since(start))
 
-	// Generate pages
+	// Generate pages in parallel
+	start = time.Now()
 	if err := b.generatePages(outputPath); err != nil {
 		return err
 	}
+	fmt.Printf("Pages generated in %v\n", time.Since(start))
 
 	// Generate tag pages
+	start = time.Now()
 	if err := b.generateTagPages(outputPath); err != nil {
 		return err
 	}
+	fmt.Printf("Tag pages generated in %v\n", time.Since(start))
 
 	// Generate home page
+	start = time.Now()
 	if err := b.generateHomePage(outputPath); err != nil {
 		return err
 	}
+	fmt.Printf("Home page generated in %v\n", time.Since(start))
 
+	fmt.Printf("Site built successfully in %v\n", time.Since(totalStart))
 	return nil
 }
 
 // loadContent loads all content files
 func (b *Builder) loadContent(sitePath string) error {
 	contentPath := filepath.Join(sitePath, b.config.ContentDir)
-
-	return filepath.Walk(contentPath, func(path string, info os.FileInfo, err error) error {
+	
+	// First, collect all markdown files
+	var markdownFiles []string
+	err := filepath.Walk(contentPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -90,18 +110,56 @@ func (b *Builder) loadContent(sitePath string) error {
 			return nil
 		}
 
-		// Load page
-		page, err := content.LoadPage(path, b.config.BaseURL)
-		if err != nil {
-			return err
-		}
+		markdownFiles = append(markdownFiles, path)
+		return nil
+	})
 
-		// Skip draft pages in production
-		if page.Draft {
-			fmt.Printf("Skipping draft: %s\n", page.Title)
-			return nil
-		}
+	if err != nil {
+		return err
+	}
 
+	// Create a worker function to load pages in parallel
+	worker := func(workerID int, jobs <-chan interface{}, results chan<- interface{}, errChan chan<- error, wg *sync.WaitGroup) {
+		defer wg.Done()
+		
+		for job := range jobs {
+			filePath := job.(string)
+			
+			// Load page
+			page, err := content.LoadPage(filePath, b.config.BaseURL)
+			if err != nil {
+				errChan <- fmt.Errorf("error loading %s: %v", filePath, err)
+				continue
+			}
+
+			// Skip draft pages in production
+			if page.Draft {
+				fmt.Printf("Skipping draft: %s\n", page.Title)
+				continue
+			}
+
+			// Add page to results
+			results <- page
+		}
+	}
+
+	// Process all markdown files in parallel
+	jobsInterface := make([]interface{}, len(markdownFiles))
+	for i, file := range markdownFiles {
+		jobsInterface[i] = file
+	}
+
+	resultsInterface, errors := parallelExecutor(jobsInterface, worker)
+	
+	// Check for errors
+	if len(errors) > 0 {
+		return errors[0]
+	}
+
+	// Process results
+	for _, result := range resultsInterface {
+		page := result.(content.Page)
+		
 		// Add page to collection
 		b.pages = append(b.pages, page)
 
@@ -109,45 +167,173 @@ func (b *Builder) loadContent(sitePath string) error {
 		for _, tag := range page.Tags {
 			b.tags[tag] = append(b.tags[tag], page)
 		}
-
-		return nil
-	})
+	}
+	
+	return nil
 }
 
 // copyStaticFiles copies static files to the output directory
 func (b *Builder) copyStaticFiles(sitePath, outputPath string) error {
-	// Copy theme static files
+	// Define a file copy job
+	type fileCopyJob struct {
+		SrcPath string
+		DstPath string
+	}
+
+	var copyJobs []interface{}
+
+	// Collect theme static files
 	themeStaticPath := filepath.Join(sitePath, "themes", b.config.Theme, "static")
 	if _, err := os.Stat(themeStaticPath); err == nil {
-		if err := copyDir(themeStaticPath, outputPath); err != nil {
+		// Get theme files
+		themeFiles, err := collectFilesToCopy(themeStaticPath, outputPath)
+		if err != nil {
 			return err
+		}
+		copyJobs = append(copyJobs, themeFiles...)
+	}
+
+	// Collect site static files (overrides theme files)
+	siteStaticPath := filepath.Join(sitePath, b.config.StaticDir)
+	if _, err := os.Stat(siteStaticPath); err == nil {
+		// Get site files
+		siteFiles, err := collectFilesToCopy(siteStaticPath, outputPath)
+		if err != nil {
+			return err
+		}
+		copyJobs = append(copyJobs, siteFiles...)
+	}
+
+	// Create a worker function to copy files in parallel
+	worker := func(workerID int, jobs <-chan interface{}, results chan<- interface{}, errChan chan<- error, wg *sync.WaitGroup) {
+		defer wg.Done()
+		
+		for job := range jobs {
+			copyJob := job.(fileCopyJob)
+			
+			// Create directory if needed
+			dir := filepath.Dir(copyJob.DstPath)
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				errChan <- fmt.Errorf("error creating directory for %s: %v", copyJob.DstPath, err)
+				continue
+			}
+			
+			// Copy file
+			err := copyFile(copyJob.SrcPath, copyJob.DstPath)
+			if err != nil {
+				errChan <- fmt.Errorf("error copying %s: %v", copyJob.SrcPath, err)
+				continue
+			}
+			
+			// Report success
+			rel, _ := filepath.Rel(outputPath, copyJob.DstPath)
+			results <- rel
 		}
 	}
 
-	// Copy site static files (overrides theme files)
-	siteStaticPath := filepath.Join(sitePath, b.config.StaticDir)
-	if _, err := os.Stat(siteStaticPath); err == nil {
-		if err := copyDir(siteStaticPath, outputPath); err != nil {
-			return err
-		}
+	// Execute jobs in parallel
+	_, errors := parallelExecutor(copyJobs, worker)
+	
+	// Check for errors
+	if len(errors) > 0 {
+		return errors[0]
 	}
 
 	return nil
 }
 
-// generatePages generates all content pages
-func (b *Builder) generatePages(outputPath string) error {
-	for _, page := range b.pages {
-		// Determine output file path
-		outputFile := filepath.Join(outputPath, page.URL, "index.html")
-
-		// Render page
-		err := b.renderer.RenderPage(page, outputFile)
+// collectFilesToCopy collects files to copy from source directory to destination
+func collectFilesToCopy(srcDir, dstDir string) ([]interface{}, error) {
+	var jobs []interface{}
+	
+	type fileCopyJob struct {
+		SrcPath string
+		DstPath string
+	}
+	
+	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("Generated: %s\n", page.URL)
+		// Skip directories (they'll be created when copying files)
+		if info.IsDir() {
+			return nil
+		}
+
+		// Get relative path
+		rel, err := filepath.Rel(srcDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Create job
+		jobs = append(jobs, fileCopyJob{
+			SrcPath: path,
+			DstPath: filepath.Join(dstDir, rel),
+		})
+
+		return nil
+	})
+
+	return jobs, err
+}
+
+// generatePages generates all content pages
+func (b *Builder) generatePages(outputPath string) error {
+	// Define a page rendering job
+	type pageRenderJob struct {
+		Page       content.Page
+		OutputFile string
+	}
+
+	// Create a worker function to render pages in parallel
+	worker := func(workerID int, jobs <-chan interface{}, results chan<- interface{}, errChan chan<- error, wg *sync.WaitGroup) {
+		defer wg.Done()
+		
+		for job := range jobs {
+			renderJob := job.(pageRenderJob)
+			
+			// Create the directory for this page
+			dir := filepath.Dir(renderJob.OutputFile)
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				errChan <- fmt.Errorf("error creating directory for %s: %v", renderJob.Page.URL, err)
+				continue
+			}
+			
+			// Render the page
+			err := b.renderer.RenderPage(renderJob.Page, renderJob.OutputFile)
+			if err != nil {
+				errChan <- fmt.Errorf("error rendering %s: %v", renderJob.Page.URL, err)
+				continue
+			}
+			
+			// Report success
+			results <- renderJob.Page.URL
+		}
+	}
+
+	// Create jobs for all pages
+	jobs := make([]interface{}, len(b.pages))
+	for i, page := range b.pages {
+		outputFile := filepath.Join(outputPath, page.URL, "index.html")
+		jobs[i] = pageRenderJob{
+			Page:       page,
+			OutputFile: outputFile,
+		}
+	}
+
+	// Execute jobs in parallel
+	results, errors := parallelExecutor(jobs, worker)
+	
+	// Check for errors
+	if len(errors) > 0 {
+		return errors[0]
+	}
+
+	// Report successful generations
+	for _, result := range results {
+		fmt.Printf("Generated: %s\n", result.(string))
 	}
 
 	return nil
@@ -168,7 +354,16 @@ func (b *Builder) generateTagPages(outputPath string) error {
 	}
 	sort.Strings(allTags)
 
-	// Generate individual tag pages
+	// Define a tag page rendering job
+	type tagRenderJob struct {
+		Tag        string
+		Pages      []content.Page
+		OutputFile string
+		Title      string
+	}
+
+	// Create jobs for each tag
+	jobs := make([]interface{}, 0, len(b.tags))
 	for tag, pages := range b.tags {
 		// Sort pages by date (newest first)
 		sort.Slice(pages, func(i, j int) bool {
@@ -181,14 +376,47 @@ func (b *Builder) generateTagPages(outputPath string) error {
 			return err
 		}
 
-		// Render tag page
+		// Add job
 		outputFile := filepath.Join(tagDir, "index.html")
 		title := fmt.Sprintf("Tag: %s", tag)
-		if err := b.renderer.RenderList(title, pages, outputFile); err != nil {
-			return err
-		}
+		jobs = append(jobs, tagRenderJob{
+			Tag:        tag,
+			Pages:      pages,
+			OutputFile: outputFile,
+			Title:      title,
+		})
+	}
 
-		fmt.Printf("Generated tag page: %s\n", tag)
+	// Create a worker function to render tag pages in parallel
+	worker := func(workerID int, jobs <-chan interface{}, results chan<- interface{}, errChan chan<- error, wg *sync.WaitGroup) {
+		defer wg.Done()
+		
+		for job := range jobs {
+			renderJob := job.(tagRenderJob)
+			
+			// Render tag page
+			err := b.renderer.RenderList(renderJob.Title, renderJob.Pages, renderJob.OutputFile)
+			if err != nil {
+				errChan <- fmt.Errorf("error rendering tag page %s: %v", renderJob.Tag, err)
+				continue
+			}
+			
+			// Report success
+			results <- renderJob.Tag
+		}
+	}
+
+	// Execute jobs in parallel
+	results, errors := parallelExecutor(jobs, worker)
+	
+	// Check for errors
+	if len(errors) > 0 {
+		return errors[0]
+	}
+
+	// Report successful generations
+	for _, result := range results {
+		fmt.Printf("Generated tag page: %s\n", result.(string))
 	}
 
 	return nil
