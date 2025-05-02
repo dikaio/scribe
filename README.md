@@ -2,6 +2,8 @@
 
 A lightweight static site generator built in pure Go with zero external dependencies.
 
+> **IMPORTANT:** This codebase is not intended for production use. It has been developed as an educational project and collaborative learning exercise between a developer and Claude Code. While functional, it lacks the testing, security reviews, and production hardening necessary for real-world deployment.
+
 ## Overview
 
 Scribes converts Markdown content with YAML front matter into HTML websites using customizable templates. It's designed to be simple, fast, and dependency-free, using only the Go standard library.
