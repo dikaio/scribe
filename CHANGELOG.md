@@ -1,3 +1,14 @@
+## v0.3.0 (2025-05-03)
+
+### Features
+
+- feat: add manual homebrew formula update script
+
+### Bug Fixes
+
+- fix: ensure goreleaser config exists in release workflow
+
+
 ## v0.2.1 (2025-05-03)
 
 ### Features
