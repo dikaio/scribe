@@ -6,11 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dikaio/scribes/internal/build"
-	"github.com/dikaio/scribes/internal/config"
-	"github.com/dikaio/scribes/internal/console"
-	"github.com/dikaio/scribes/internal/content"
-	"github.com/dikaio/scribes/internal/server"
+	"github.com/dikaio/scribe/internal/build"
+	"github.com/dikaio/scribe/internal/config"
+	"github.com/dikaio/scribe/internal/console"
+	"github.com/dikaio/scribe/internal/content"
+	"github.com/dikaio/scribe/internal/server"
+	"github.com/dikaio/scribe/internal/templates"
 )
 
 // App represents the CLI application
@@ -67,16 +68,11 @@ func (a *App) registerCommands() {
 	// New site command
 	a.Commands["new"] = Command{
 		Name:        "new",
-		Description: "Create a new site, post, page, theme, plugin, or partial",
+		Description: "Create a new site, post, or page",
 		Action:      a.cmdNew,
 	}
 
-	// Test command
-	a.Commands["test"] = Command{
-		Name:        "test",
-		Description: "Run the tests",
-		Action:      a.cmdTest,
-	}
+	// NOTE: Test command removed as it was unimplemented
 }
 
 // Run executes the CLI application
@@ -123,24 +119,37 @@ func (a *App) showHelp() {
 
 // Command implementations
 
-// cmdBuild implements the build command, which generates the static site.
-// It takes an optional path argument (or uses the current directory if not provided).
-func (a *App) cmdBuild(args []string) error {
+// getSitePathAndConfig is a helper function to determine the site path from args
+// and load the site configuration. It standardizes this common operation across commands.
+func (a *App) getSitePathAndConfig(args []string, action string) (string, config.Config, error) {
 	// Determine site path
 	sitePath := "."
 	if len(args) > 0 {
 		sitePath = args[0]
 	}
 
-	fmt.Printf("Building site from '%s'...\n", sitePath)
+	if action != "" {
+		fmt.Printf("%s site from '%s'...\n", action, sitePath)
+	}
 
 	// Load the site configuration
 	cfg, err := config.LoadConfig(sitePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("config file not found in '%s', make sure this is a valid Scribes site directory", sitePath)
+			return "", cfg, fmt.Errorf("config file not found in '%s', make sure this is a valid Scribe site directory", sitePath)
 		}
-		return fmt.Errorf("failed to load configuration: %w", err)
+		return "", cfg, fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	return sitePath, cfg, nil
+}
+
+// cmdBuild implements the build command, which generates the static site.
+// It takes an optional path argument (or uses the current directory if not provided).
+func (a *App) cmdBuild(args []string) error {
+	sitePath, cfg, err := a.getSitePathAndConfig(args, "Building")
+	if err != nil {
+		return err
 	}
 
 	// Initialize the builder
@@ -159,21 +168,9 @@ func (a *App) cmdBuild(args []string) error {
 // cmdServe implements the serve command, which starts a development server with live reload.
 // It takes an optional path argument (or uses the current directory if not provided).
 func (a *App) cmdServe(args []string) error {
-	// Determine site path
-	sitePath := "."
-	if len(args) > 0 {
-		sitePath = args[0]
-	}
-
-	fmt.Printf("Starting development server for '%s'...\n", sitePath)
-
-	// Load the site configuration
-	cfg, err := config.LoadConfig(sitePath)
+	sitePath, cfg, err := a.getSitePathAndConfig(args, "Starting development server for")
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("config file not found in '%s', make sure this is a valid Scribes site directory", sitePath)
-		}
-		return fmt.Errorf("failed to load configuration: %w", err)
+		return err
 	}
 
 	// Initialize the server (default port: 8080)
@@ -192,21 +189,9 @@ func (a *App) cmdServe(args []string) error {
 // cmdConsole implements the console command, which starts the web management interface.
 // It takes an optional path argument (or uses the current directory if not provided).
 func (a *App) cmdConsole(args []string) error {
-	// Determine site path
-	sitePath := "."
-	if len(args) > 0 {
-		sitePath = args[0]
-	}
-
-	fmt.Printf("Starting console for '%s'...\n", sitePath)
-
-	// Load the site configuration
-	cfg, err := config.LoadConfig(sitePath)
+	sitePath, cfg, err := a.getSitePathAndConfig(args, "Starting console for")
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("config file not found in '%s', make sure this is a valid Scribes site directory", sitePath)
-		}
-		return fmt.Errorf("failed to load configuration: %w", err)
+		return err
 	}
 
 	// Initialize console (default port: 8090)
@@ -236,15 +221,6 @@ func (a *App) cmdNew(args []string) error {
 		return a.createNewPost(name)
 	case "page":
 		return a.createNewPage(name)
-	case "theme":
-		fmt.Printf("Creating new theme: %s\n", name)
-		return errors.New("not implemented yet")
-	case "plugin":
-		fmt.Printf("Creating new plugin: %s\n", name)
-		return errors.New("not implemented yet")
-	case "partial":
-		fmt.Printf("Creating new partial: %s\n", name)
-		return errors.New("not implemented yet")
 	default:
 		return fmt.Errorf("unknown resource type: %s", resType)
 	}
@@ -262,7 +238,7 @@ func (a *App) createNewSite(name string) error {
 		}
 	}
 
-	fmt.Printf("Creating new Scribes site in '%s'...\n", sitePath)
+	fmt.Printf("Creating new Scribe site in '%s'...\n", sitePath)
 
 	// Create directories
 	dirs := []string{
@@ -354,300 +330,30 @@ func (a *App) createNewPage(title string) error {
 
 // createSampleContent creates sample content files for a new site
 func (a *App) createSampleContent(sitePath string) error {
-	// Sample post
-	samplePost := `---
-title: Welcome to Scribes
-description: A sample post to get you started
-date: 2025-05-01T12:00:00Z
-tags:
-  - welcome
-  - scribes
-draft: false
----
-
-# Welcome to Scribes!
-
-This is a sample post to help you get started with Scribes, a lightweight static site generator.
-
-## Features
-
-- Markdown support
-- Fast and lightweight
-- No external dependencies
-- Simple to use
-
-Enjoy creating content with Scribes!
-`
+	// Write sample post
 	postPath := filepath.Join(sitePath, "content", "posts", "welcome.md")
-	if err := os.WriteFile(postPath, []byte(samplePost), 0644); err != nil {
+	if err := os.WriteFile(postPath, []byte(templates.SamplePost), 0644); err != nil {
 		return err
 	}
 
-	// Sample page
-	samplePage := `---
-title: About
-description: About this site
-draft: false
----
-
-# About
-
-This is an about page for your Scribes site. You can add information about yourself or your project here.
-
-## Contact
-
-Feel free to reach out with any questions or feedback.
-`
+	// Write sample page
 	pagePath := filepath.Join(sitePath, "content", "about.md")
-	return os.WriteFile(pagePath, []byte(samplePage), 0644)
+	return os.WriteFile(pagePath, []byte(templates.SamplePage), 0644)
 }
 
 // createDefaultTemplates creates default templates for a new site
 func (a *App) createDefaultTemplates(sitePath string) error {
-	// Base template
-	baseTemplate := `<!DOCTYPE html>
-<html lang="{{.Site.Language}}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{if .Title}}{{.Title}} | {{end}}{{.Site.Title}}</title>
-    <meta name="description" content="{{if .Description}}{{.Description}}{{else}}{{.Site.Description}}{{end}}">
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1><a href="/">{{.Site.Title}}</a></h1>
-            <nav>
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about/">About</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        {{block "content" .}}{{end}}
-    </main>
-    <footer>
-        <div class="container">
-            <p>&copy; {{.Site.Title}}</p>
-        </div>
-    </footer>
-</body>
-</html>`
-
-	// Single post template
-	singleTemplate := `{{define "content"}}
-<article>
-    <header>
-        <h1>{{.Page.Title}}</h1>
-        <p class="meta">
-            <time>{{formatDate .Page.Date}}</time>
-            {{if .Page.Tags}}
-            | Tags: 
-            {{range .Page.Tags}}
-            <a href="/tags/{{.}}/">{{.}}</a>
-            {{end}}
-            {{end}}
-        </p>
-    </header>
-    <div class="content">
-        {{.Content}}
-    </div>
-</article>
-{{end}}`
-
-	// List template
-	listTemplate := `{{define "content"}}
-<h1>{{.Title}}</h1>
-<div class="post-list">
-    {{range .Pages}}
-    <article class="post-summary">
-        <h2><a href="/{{.URL}}/">{{.Title}}</a></h2>
-        <p class="meta">
-            <time>{{formatDate .Date}}</time>
-            {{if .Tags}}
-            | Tags: 
-            {{range .Tags}}
-            <a href="/tags/{{.}}/">{{.}}</a>
-            {{end}}
-            {{end}}
-        </p>
-        <p>{{.Description}}</p>
-    </article>
-    {{end}}
-</div>
-{{end}}`
-
-	// Home template
-	homeTemplate := `{{define "content"}}
-<h1>Recent Posts</h1>
-<div class="post-list">
-    {{range .Pages}}
-    <article class="post-summary">
-        <h2><a href="/{{.URL}}/">{{.Title}}</a></h2>
-        <p class="meta">
-            <time>{{formatDate .Date}}</time>
-            {{if .Tags}}
-            | Tags: 
-            {{range .Tags}}
-            <a href="/tags/{{.}}/">{{.}}</a>
-            {{end}}
-            {{end}}
-        </p>
-        <p>{{.Description}}</p>
-    </article>
-    {{end}}
-</div>
-{{end}}`
-
-	// Page template
-	pageTemplate := `{{define "content"}}
-<article>
-    <header>
-        <h1>{{.Page.Title}}</h1>
-    </header>
-    <div class="content">
-        {{.Content}}
-    </div>
-</article>
-{{end}}`
-
-	// CSS file
-	cssContent := `/* Basic styles for Scribes default theme */
-:root {
-    --primary-color: #0077cc;
-    --text-color: #333;
-    --background-color: #fff;
-    --light-gray: #f5f5f5;
-    --border-color: #ddd;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    line-height: 1.6;
-    color: var(--text-color);
-    background-color: var(--background-color);
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-header {
-    background-color: var(--light-gray);
-    padding: 20px 0;
-    margin-bottom: 40px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-header h1 {
-    font-size: 2rem;
-}
-
-header h1 a {
-    color: var(--text-color);
-    text-decoration: none;
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-}
-
-nav a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-main {
-    min-height: 70vh;
-    margin-bottom: 40px;
-}
-
-footer {
-    background-color: var(--light-gray);
-    padding: 20px 0;
-    border-top: 1px solid var(--border-color);
-    text-align: center;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    margin-bottom: 1rem;
-    line-height: 1.25;
-}
-
-p, ul, ol {
-    margin-bottom: 1.5rem;
-}
-
-a {
-    color: var(--primary-color);
-}
-
-.post-list {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-.post-summary {
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.meta {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-}
-
-article .content {
-    margin-top: 20px;
-}
-
-/* Code blocks */
-pre {
-    background-color: var(--light-gray);
-    padding: 1rem;
-    overflow-x: auto;
-    border-radius: 4px;
-    margin-bottom: 1.5rem;
-}
-
-code {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.9em;
-    background-color: var(--light-gray);
-    padding: 0.2em 0.4em;
-    border-radius: 3px;
-}
-
-pre code {
-    padding: 0;
-    background-color: transparent;
-}`
-
-	// Save templates
-	templates := map[string]string{
-		filepath.Join(sitePath, "themes", "default", "layouts", "base.html"):   baseTemplate,
-		filepath.Join(sitePath, "themes", "default", "layouts", "single.html"): singleTemplate,
-		filepath.Join(sitePath, "themes", "default", "layouts", "list.html"):   listTemplate,
-		filepath.Join(sitePath, "themes", "default", "layouts", "home.html"):   homeTemplate,
-		filepath.Join(sitePath, "themes", "default", "layouts", "page.html"):   pageTemplate,
+	// Define template paths
+	templatePaths := map[string]string{
+		filepath.Join(sitePath, "themes", "default", "layouts", "base.html"):   templates.BaseTemplate,
+		filepath.Join(sitePath, "themes", "default", "layouts", "single.html"): templates.SingleTemplate,
+		filepath.Join(sitePath, "themes", "default", "layouts", "list.html"):   templates.ListTemplate,
+		filepath.Join(sitePath, "themes", "default", "layouts", "home.html"):   templates.HomeTemplate,
+		filepath.Join(sitePath, "themes", "default", "layouts", "page.html"):   templates.PageTemplate,
 	}
 
-	for path, content := range templates {
+	// Write template files
+	for path, content := range templatePaths {
 		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 			return fmt.Errorf("failed to create template '%s': %w", path, err)
 		}
@@ -659,11 +365,9 @@ pre code {
 		return fmt.Errorf("failed to create CSS directory: %w", err)
 	}
 
+	// Write CSS file
 	cssFilePath := filepath.Join(cssPath, "style.css")
-	return os.WriteFile(cssFilePath, []byte(cssContent), 0644)
+	return os.WriteFile(cssFilePath, []byte(templates.StyleCSS), 0644)
 }
 
-func (a *App) cmdTest(args []string) error {
-	fmt.Println("Running tests...")
-	return errors.New("not implemented yet")
-}
+// Test command removed as it was unimplemented

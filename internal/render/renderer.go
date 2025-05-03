@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dikaio/scribes/internal/config"
-	"github.com/dikaio/scribes/internal/content"
+	"github.com/dikaio/scribe/internal/config"
+	"github.com/dikaio/scribe/internal/content"
 )
 
 // Renderer handles rendering pages to HTML files

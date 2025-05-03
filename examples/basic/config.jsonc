@@ -1,5 +1,5 @@
 {
-	"title": "Basic Scribes Example",
+	"title": "Basic Scribe Example",
 	"baseURL": "http://example.org/",
 	"theme": "default",
 	"language": "en",
@@ -7,8 +7,8 @@
 	"layoutDir": "layouts",
 	"staticDir": "static",
 	"outputDir": "public",
-	"author": "Scribes User",
-	"description": "A basic Scribes example site",
+	"author": "Scribe User",
+	"description": "A basic Scribe example site",
 	"summaryLength": 70,
 	"tags": ["example", "tutorial"]
 }

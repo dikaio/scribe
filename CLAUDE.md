@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Build & Run Commands
-- Build: `go build -o scribe ./cmd/scribe`
+- Build: `go build -o bin/scribe ./cmd/scribe`
 - Install: `go install ./cmd/scribe`
 - Run: `go run ./cmd/scribe/main.go`
 
@@ -11,6 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run all tests: `go test ./...`
 - Run specific test: `go test ./internal/[package] -run TestName`
 - Example: `go test ./internal/config -run TestDefaultConfig`
+- Run with coverage: `go test ./... -coverprofile=build/coverage/coverage.out`
+- View coverage report: `go tool cover -html=build/coverage/coverage.out -o build/coverage/coverage.html`
+- Check coverage stats: `go tool cover -func=build/coverage/coverage.out`
 
 ## Code Style Guidelines
 - **Imports**: Group standard library first, then third-party, sorted alphabetically

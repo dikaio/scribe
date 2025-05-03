@@ -7,7 +7,7 @@ tags:
 draft: false
 ---
 
-# Hello from Scribes
+# Hello from Scribe
 
 This is a test post to verify the build command is working properly.
 

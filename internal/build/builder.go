@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dikaio/scribes/internal/config"
-	"github.com/dikaio/scribes/internal/content"
-	"github.com/dikaio/scribes/internal/render"
+	"github.com/dikaio/scribe/internal/config"
+	"github.com/dikaio/scribe/internal/content"
+	"github.com/dikaio/scribe/internal/render"
 )
 
 // Builder handles site building

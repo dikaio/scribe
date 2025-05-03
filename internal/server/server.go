@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dikaio/scribes/internal/build"
-	"github.com/dikaio/scribes/internal/config"
+	"github.com/dikaio/scribe/internal/build"
+	"github.com/dikaio/scribe/internal/config"
 )
 
 // Server represents the development server

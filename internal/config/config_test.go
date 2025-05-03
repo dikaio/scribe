@@ -10,8 +10,8 @@ func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
 	// Check default values
-	if cfg.Title != "My Scribes Site" {
-		t.Errorf("Expected default title to be 'My Scribes Site', got %s", cfg.Title)
+	if cfg.Title != "My Scribe Site" {
+		t.Errorf("Expected default title to be 'My Scribe Site', got %s", cfg.Title)
 	}
 
 	if cfg.Theme != "default" {
@@ -25,7 +25,7 @@ func TestDefaultConfig(t *testing.T) {
 
 func TestSaveAndLoadConfig(t *testing.T) {
 	// Create temporary directory for test
-	tempDir, err := os.MkdirTemp("", "scribes-config-test")
+	tempDir, err := os.MkdirTemp("", "scribe-config-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}

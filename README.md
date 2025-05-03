@@ -1,4 +1,4 @@
-# Scribes
+# Scribe
 
 A lightweight static site generator built in pure Go with zero external dependencies.
 
@@ -6,11 +6,11 @@ A lightweight static site generator built in pure Go with zero external dependen
 
 ## Overview
 
-Scribes converts Markdown content with YAML front matter into HTML websites using customizable templates. It's designed to be simple, fast, and dependency-free, using only the Go standard library.
+Scribe converts Markdown content with YAML front matter into HTML websites using customizable templates. It's designed to be simple, fast, and dependency-free, using only the Go standard library.
 
 ## Features
 
-- **Markdown to HTML conversion** - Write your content in Markdown, Scribes handles the rest
+- **Markdown to HTML conversion** - Write your content in Markdown, Scribe handles the rest
 - **YAML front matter** - Add metadata to your content like title, date, tags, etc.
 - **Templating system** - Use Go's html/template for layouts and themes
 - **Live reload development server** - See changes as you make them
@@ -28,11 +28,11 @@ Scribes converts Markdown content with YAML front matter into HTML websites usin
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/scribes.git
-cd scribes
+git clone https://github.com/yourusername/scribe.git
+cd scribe
 
 # Build the binary
-go build -o scribe ./cmd/scribe
+go build -o bin/scribe ./cmd/scribe
 
 # Install globally (optional)
 go install ./cmd/scribe
@@ -101,7 +101,7 @@ mysite/
 
 ## Content Format
 
-Scribes uses Markdown files with YAML front matter for content:
+Scribe uses Markdown files with YAML front matter for content:
 
 ```markdown
 ---
@@ -125,7 +125,7 @@ Site configuration is stored in `config.jsonc`:
 
 ```json
 {
-  "title": "My Scribes Site",
+  "title": "My Scribe Site",
   "baseURL": "http://example.com/",
   "theme": "default",
   "language": "en",
@@ -153,7 +153,7 @@ Site configuration is stored in `config.jsonc`:
 
 ## Templating
 
-Scribes uses Go's `html/template` package for templating. Base templates include:
+Scribe uses Go's `html/template` package for templating. Base templates include:
 
 - `base.html` - The base template that defines the overall structure
 - `single.html` - Template for individual posts/pages
@@ -183,7 +183,7 @@ To create a custom theme:
 To override a theme's templates:
 
 1. Create a file with the same name in your site's `layouts/` directory
-2. Scribes will use your custom template instead of the theme's
+2. Scribe will use your custom template instead of the theme's
 
 ### Performance
 
@@ -212,7 +212,7 @@ Our implementation is significantly faster than most JavaScript and Ruby-based g
 
 #### Proposed
 
-The following optimizations could bring Scribes performance to match or exceed Hugo:
+The following optimizations could bring Scribe performance to match or exceed Hugo:
 
 - [ ] **Memory Pooling**: Implement object pools for frequently created/destroyed objects to reduce GC pressure
 - [ ] **Incremental Builds**: Add file modification time tracking to only rebuild changed content
@@ -224,7 +224,7 @@ The following optimizations could bring Scribes performance to match or exceed H
 - [ ] **Lazy Loading**: Only load dependencies when needed rather than upfront
 - [ ] **Binary Template Storage**: Store compiled templates in binary format for faster loading
 - [ ] **Optimized String Handling**: Reduce string allocations and use byte slices where possible
-- [ ] **Write comprehensive documentation**: Outline the design, architecture, and usage of Scribes
+- [ ] **Write comprehensive documentation**: Outline the design, architecture, and usage of Scribe
 - [ ] RSS Feeds
 - [ ] CI/CD Pipeline
 

@@ -8,7 +8,7 @@ import (
 
 func TestCreateContent(t *testing.T) {
 	// Create temporary directory for tests
-	tempDir, err := os.MkdirTemp("", "scribes-test")
+	tempDir, err := os.MkdirTemp("", "scribe-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}

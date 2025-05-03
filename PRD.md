@@ -1,12 +1,12 @@
-# Scribes: Product Requirements Document
+# Scribe: Product Requirements Document
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-This document outlines the requirements for Scribes, a lightweight static site generator built using only the Go standard library. Scribes aims to provide a simple alternative to existing Go static site generators while maintaining core functionality needed for small to medium websites.
+This document outlines the requirements for Scribe, a lightweight static site generator built using only the Go standard library. Scribe aims to provide a simple alternative to existing Go static site generators while maintaining core functionality needed for small to medium websites.
 
 ### 1.2 Product Scope
-Scribes converts Markdown content with front matter into HTML websites using customizable templates. It targets developers and content creators who want a minimalist, dependency-free tool for generating static websites.
+Scribe converts Markdown content with front matter into HTML websites using customizable templates. It targets developers and content creators who want a minimalist, dependency-free tool for generating static websites.
 
 ### 1.3 Definitions and Acronyms
 - **SSG**: Static Site Generator
@@ -18,7 +18,7 @@ Scribes converts Markdown content with front matter into HTML websites using cus
 ## 2. Product Overview
 
 ### 2.1 Product Perspective
-Scribes is a standalone tool that takes content written in Markdown and converts it to a static website using templates. Unlike more complex SSGs, Scribes aims for simplicity and as close to zero external dependencies as possible utilizing the Go standard library.
+Scribe is a standalone tool that takes content written in Markdown and converts it to a static website using templates. Unlike more complex SSGs, Scribe aims for simplicity and as close to zero external dependencies as possible utilizing the Go standard library.
 
 ### 2.2 Product Features
 - Markdown to HTML conversion
@@ -287,7 +287,7 @@ This is the body of the post written in Markdown.
 
 ### 10.1 Comparison with Existing Solutions
 
-| Feature         | Scribes             | Hugo         | Jekyll         |
+| Feature         | Scribe              | Hugo         | Jekyll         |
 | --------------- | ------------------- | ------------ | -------------- |
 | Dependencies    | None (std lib only) | Few          | Ruby ecosystem |
 | Build Speed     | Very Fast           | Very Fast    | Moderate       |

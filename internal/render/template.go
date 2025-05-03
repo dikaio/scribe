@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dikaio/scribes/internal/config"
+	"github.com/dikaio/scribe/internal/config"
 )
 
 // TemplateManager manages template loading and rendering

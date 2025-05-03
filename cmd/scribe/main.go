@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dikaio/scribes/pkg/cli"
+	"github.com/dikaio/scribe/pkg/cli"
 )
 
 func main() {
