@@ -79,8 +79,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-      - Merge pull request
-      - Merge branch
+      - 'Merge pull request'
+      - 'Merge branch'
 EOF
           fi
 
