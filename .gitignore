@@ -43,3 +43,7 @@ logs/
 
 # Cache files
 .cache/
+
+# References directory - only keep README.md
+references/*
+!references/README.md
