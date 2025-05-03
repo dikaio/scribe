@@ -82,8 +82,10 @@ echo -e "${YELLOW}Tests temporarily skipped for demonstration${NC}"
 #   exit 1
 # fi
 
-# Get current version from Go code
-CURRENT_VERSION=$(grep 'Version = "v[0-9]\+\.[0-9]\+\.[0-9]\+"' pkg/cli/cli.go | sed 's/.*Version = "v\([0-9]\+\.[0-9]\+\.[0-9]\+\)".*/\1/')
+# Manually get current version from Go code
+echo -e "${YELLOW}Reading current version...${NC}"
+VERSION_LINE=$(grep -E '^[[:space:]]*Version[[:space:]]*=[[:space:]]*"v[0-9]+\.[0-9]+\.[0-9]+"' pkg/cli/cli.go || echo 'Version = "v0.1.0"')
+CURRENT_VERSION=$(echo "$VERSION_LINE" | sed -E 's/.*"v([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
 
 echo -e "${GREEN}Current version: v${CURRENT_VERSION}${NC}"
 
@@ -147,10 +149,11 @@ fi
 echo -e "${YELLOW}Generated changelog:${NC}"
 echo -e "$CHANGELOG_CONTENT"
 
-# Update version in code
+# Update version in code with a more robust approach
 echo -e "${YELLOW}Updating version in code...${NC}"
-sed -i.bak "s/Version = \"v[0-9]\+\.[0-9]\+\.[0-9]\+\"/Version = \"v${NEW_VERSION}\"/" pkg/cli/cli.go
-rm pkg/cli/cli.go.bak
+NEW_VERSION_LINE="	Version = \"v${NEW_VERSION}\""
+awk -v old="$VERSION_LINE" -v new="$NEW_VERSION_LINE" '{gsub(old, new); print}' pkg/cli/cli.go > pkg/cli/cli.go.new
+mv pkg/cli/cli.go.new pkg/cli/cli.go
 
 # Update CHANGELOG.md if it exists
 if [ -f "CHANGELOG.md" ]; then
