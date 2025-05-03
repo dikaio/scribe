@@ -2,6 +2,17 @@
 
 ### Features
 
+- feat: automate Homebrew formula updates on release
+
+### Other Changes
+
+- chore: update Homebrew formula to v.1.0
+
+
+## v.1.0 (2025-05-03)
+
+### Features
+
 - feat: add automated release process with Homebrew and Go install support
 
 ### Bug Fixes
