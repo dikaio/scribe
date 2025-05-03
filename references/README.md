@@ -4,6 +4,16 @@ This directory contains cloned repositories used for reference and inspiration. 
 
 The contents of repositories cloned into this directory are intentionally git-ignored to avoid committing external code to this project.
 
+## Planned Features
+
+### HTML Sanitizer Module
+Create a simplified HTML sanitizer inspired by bluemonday but:
+- Using only the Go standard library
+- More elegant and maintainable design
+- Focused on core sanitization needs for Markdown-to-HTML conversion
+- Support for configurable allowed tags and attributes
+- Secure by default while remaining performant
+
 ## Usage
 
 Clone reference repositories here:
