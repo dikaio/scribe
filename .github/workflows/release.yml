@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Update Homebrew Formula
+        id: update-formula
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          
+          # Download the release tarball to calculate its SHA256
+          TARBALL_URL="https://github.com/dikaio/scribe/archive/refs/tags/v${VERSION}.tar.gz"
+          curl -L -o scribe.tar.gz "$TARBALL_URL"
+          SHA256=$(sha256sum scribe.tar.gz | awk '{print $1}')
+          
+          # Update the formula
+          sed -i "s|url \".*\"|url \"$TARBALL_URL\"|" .github/homebrew/scribe.rb
+          sed -i "s|sha256 \".*\"|sha256 \"$SHA256\"|" .github/homebrew/scribe.rb
+          
+          # Create pull request to homebrew-core
+          echo "Formula updated with version v${VERSION} and SHA256 ${SHA256}"

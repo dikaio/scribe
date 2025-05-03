@@ -2,11 +2,11 @@
 
 A lightweight static site generator built in pure Go with zero external dependencies.
 
-> **IMPORTANT:** This codebase is not intended for production use. It has been developed as an educational project and collaborative learning exercise between a developer and Claude Code. While functional, it lacks the testing, security reviews, and production hardening necessary for real-world deployment.
+> **IMPORTANT:** This codebase is not intended for production use. It has been developed as an educational project leveraging Claude Code. While functional, it lacks the testing, security reviews, and production hardening necessary for real-world deployment.
 
 ## Overview
 
-Scribe converts Markdown content with YAML front matter into HTML websites using customizable templates. It's designed to be simple, fast, and dependency-free, using only the Go standard library.
+Scribe is a minimalist static site generator that transforms Markdown content with YAML front matter into elegant HTML websites. Built entirely with Go's standard library, it delivers exceptional performance without external dependencies.
 
 ## Features
 
@@ -20,23 +20,21 @@ Scribe converts Markdown content with YAML front matter into HTML websites using
 
 ## Installation
 
-### Prerequisites
-
-- Go 1.16 or later
-
-### Building from source
+### Option 1: Install with Go (All Platforms)
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/scribe.git
-cd scribe
-
-# Build the binary
-go build -o bin/scribe ./cmd/scribe
-
-# Install globally (optional)
-go install ./cmd/scribe
+go install github.com/dikaio/scribe@latest
 ```
+
+This will install the latest version of Scribe globally. Ensure your Go bin directory is in your PATH.
+
+### Option 2: Install with Homebrew (macOS & Linux)
+
+```bash
+brew install scribe
+```
+
+This will install Scribe and handle all dependencies automatically.
 
 ## Quick Start
 

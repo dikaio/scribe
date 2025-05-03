@@ -14,6 +14,16 @@ import (
 	"github.com/dikaio/scribe/internal/templates"
 )
 
+// Version information set by build flags
+var (
+	// Version is the semantic version of the application
+	Version = "dev"
+	// Commit is the git commit SHA at build time
+	Commit = "none" 
+	// Date is the build date
+	Date = "unknown"
+)
+
 // App represents the CLI application
 type App struct {
 	Name     string
@@ -32,7 +42,7 @@ type Command struct {
 func NewApp() *App {
 	app := &App{
 		Name:     "scribe",
-		Version:  "0.1.0",
+		Version:  Version,
 		Commands: make(map[string]Command),
 	}
 
@@ -91,6 +101,8 @@ func (a *App) Run(args []string) error {
 
 	if cmdName == "version" || cmdName == "-v" || cmdName == "--version" {
 		fmt.Printf("%s version %s\n", a.Name, a.Version)
+		fmt.Printf("Commit: %s\n", Commit)
+		fmt.Printf("Built: %s\n", Date)
 		return nil
 	}
 
