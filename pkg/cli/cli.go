@@ -77,10 +77,10 @@ func (a *App) registerCommands() {
 		Action:      a.cmdConsole,
 	}
 
-	// New site command
+	// New project command
 	a.Commands["new"] = Command{
 		Name:        "new",
-		Description: "Create a new site, post, or page interactively",
+		Description: "Create a new project, post, or page interactively",
 		Action:      a.cmdNew,
 	}
 
@@ -119,7 +119,7 @@ func (a *App) Run(args []string) error {
 
 // showHelp displays help information
 func (a *App) showHelp() {
-	fmt.Printf("%s - A lightweight static site generator\n\n", a.Name)
+	fmt.Printf("%s - A lightweight static project generator\n\n", a.Name)
 	fmt.Println("Usage:")
 	fmt.Printf("  %s [command] [arguments]\n\n", a.Name)
 	fmt.Println("Available commands:")
@@ -129,10 +129,10 @@ func (a *App) showHelp() {
 	}
 	
 	fmt.Println("\nExamples:")
-	fmt.Printf("  %s new                  Create a new site in the current directory with interactive prompts\n", a.Name)
-	fmt.Printf("  %s new my-site          Create a new site in 'my-site' directory with interactive prompts\n", a.Name)
+	fmt.Printf("  %s new                  Create a new project in the current directory with interactive prompts\n", a.Name)
+	fmt.Printf("  %s new my-project       Create a new project in 'my-project' directory with interactive prompts\n", a.Name)
 	fmt.Printf("  %s serve                Start development server for the current directory\n", a.Name)
-	fmt.Printf("  %s build                Build the site in the current directory\n", a.Name)
+	fmt.Printf("  %s build                Build the project in the current directory\n", a.Name)
 
 	fmt.Println("\nUse 'scribe help [command]' for more information about a command.")
 }
@@ -226,14 +226,14 @@ func (a *App) cmdConsole(args []string) error {
 func (a *App) cmdNew(args []string) error {
 	// If no arguments, assume we're creating a new site
 	if len(args) < 1 {
-		return a.createNewSite("")
+		return a.createNewProject("")
 	}
 
-	// If first arg starts with a letter and not "site", "post", or "page", 
-	// treat it as a site name
+	// If first arg starts with a letter and not "project", "post", or "page", 
+	// treat it as a project name
 	firstArg := args[0]
-	if firstArg != "site" && firstArg != "post" && firstArg != "page" {
-		return a.createNewSite(firstArg)
+	if firstArg != "project" && firstArg != "post" && firstArg != "page" {
+		return a.createNewProject(firstArg)
 	}
 
 	// Otherwise, handle the classic way
@@ -244,8 +244,8 @@ func (a *App) cmdNew(args []string) error {
 	}
 
 	switch resType {
-	case "site":
-		return a.createNewSite(name)
+	case "project":
+		return a.createNewProject(name)
 	case "post":
 		return a.createNewPost(name)
 	case "page":
@@ -255,20 +255,20 @@ func (a *App) cmdNew(args []string) error {
 	}
 }
 
-// createNewSite scaffolds a new site with default structure and templates
-func (a *App) createNewSite(name string) error {
+// createNewProject scaffolds a new project with default structure and templates
+func (a *App) createNewProject(name string) error {
 	// Prompt for name if not provided
-	sitePath := "."
+	projectPath := "."
 	if name == "" {
 		fmt.Print("Enter project name (leave empty to use current directory): ")
 		fmt.Scanln(&name)
 	}
 	
 	if name != "" {
-		sitePath = name
-		// Create site directory
-		if err := os.MkdirAll(sitePath, 0755); err != nil {
-			return fmt.Errorf("failed to create site directory: %w", err)
+		projectPath = name
+		// Create project directory
+		if err := os.MkdirAll(projectPath, 0755); err != nil {
+			return fmt.Errorf("failed to create project directory: %w", err)
 		}
 	}
 
@@ -294,7 +294,7 @@ func (a *App) createNewSite(name string) error {
 		template = "none" // default to minimal if input is empty or invalid
 	}
 	
-	fmt.Printf("Creating new Scribe site in '%s' with '%s' template...\n", sitePath, template)
+	fmt.Printf("Creating new Scribe project in '%s' with '%s' template...\n", projectPath, template)
 
 	// Create directories
 	dirs := []string{
@@ -308,7 +308,7 @@ func (a *App) createNewSite(name string) error {
 	}
 
 	for _, dir := range dirs {
-		path := filepath.Join(sitePath, dir)
+		path := filepath.Join(projectPath, dir)
 		if err := os.MkdirAll(path, 0755); err != nil {
 			return fmt.Errorf("failed to create directory '%s': %w", dir, err)
 		}
@@ -329,17 +329,17 @@ func (a *App) createNewSite(name string) error {
 		cfg.Description = "Showcasing all Scribe features"
 	}
 	
-	if err := cfg.Save(sitePath); err != nil {
+	if err := cfg.Save(projectPath); err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
 
 	// Create sample content
-	if err := a.createSampleContent(sitePath); err != nil {
+	if err := a.createSampleContent(projectPath); err != nil {
 		return fmt.Errorf("failed to create sample content: %w", err)
 	}
 
 	// Create default templates
-	if err := a.createDefaultTemplates(sitePath); err != nil {
+	if err := a.createDefaultTemplates(projectPath); err != nil {
 		return fmt.Errorf("failed to create default templates: %w", err)
 	}
 	
@@ -355,13 +355,13 @@ func (a *App) createNewSite(name string) error {
 	
 	if initGit {
 		fmt.Println("Initializing git repository...")
-		gitCmd := exec.Command("git", "init", sitePath)
+		gitCmd := exec.Command("git", "init", projectPath)
 		err := gitCmd.Run()
 		if err != nil {
 			fmt.Printf("Warning: Failed to initialize git repository: %v\n", err)
 		} else {
 			// Create .gitignore
-			gitignorePath := filepath.Join(sitePath, ".gitignore")
+			gitignorePath := filepath.Join(projectPath, ".gitignore")
 			gitignoreContent := "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
 			if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
 				fmt.Printf("Warning: Failed to create .gitignore file: %v\n", err)
@@ -369,7 +369,7 @@ func (a *App) createNewSite(name string) error {
 		}
 	}
 
-	fmt.Println("Site created successfully!")
+	fmt.Println("Project created successfully!")
 	fmt.Println("Run 'scribe serve' to start the development server.")
 	return nil
 }

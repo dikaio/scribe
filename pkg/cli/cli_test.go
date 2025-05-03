@@ -104,7 +104,7 @@ func TestShowHelp(t *testing.T) {
 	// If we get here, it didn't panic
 }
 
-func TestCreateNewSite(t *testing.T) {
+func TestCreateNewProject(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "cli-test")
 	if err != nil {
@@ -112,8 +112,8 @@ func TestCreateNewSite(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Create test site path
-	sitePath := filepath.Join(tempDir, "test-site")
+	// Create test project path
+	projectPath := filepath.Join(tempDir, "test-project")
 
 	// Create app
 	app := NewApp()
@@ -132,14 +132,14 @@ func TestCreateNewSite(t *testing.T) {
 		w.Write([]byte("\nn\n"))
 	}()
 	
-	// Create new site
-	err = app.createNewSite(sitePath)
+	// Create new project
+	err = app.createNewProject(projectPath)
 	
 	// Restore stdin
 	os.Stdin = oldStdin
 	
 	if err != nil {
-		t.Fatalf("Failed to create new site: %v", err)
+		t.Fatalf("Failed to create new project: %v", err)
 	}
 
 	// Check that directories were created
@@ -154,25 +154,25 @@ func TestCreateNewSite(t *testing.T) {
 	}
 
 	for _, dir := range expectedDirs {
-		path := filepath.Join(sitePath, dir)
+		path := filepath.Join(projectPath, dir)
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Errorf("Expected directory '%s' to be created", path)
 		}
 	}
 
 	// Check that config file was created
-	configPath := filepath.Join(sitePath, "config.jsonc")
+	configPath := filepath.Join(projectPath, "config.jsonc")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		t.Errorf("Expected config file to be created at '%s'", configPath)
 	}
 
 	// Check that sample content was created
-	samplePostPath := filepath.Join(sitePath, "content", "posts", "welcome.md")
+	samplePostPath := filepath.Join(projectPath, "content", "posts", "welcome.md")
 	if _, err := os.Stat(samplePostPath); os.IsNotExist(err) {
 		t.Errorf("Expected sample post to be created at '%s'", samplePostPath)
 	}
 
-	samplePagePath := filepath.Join(sitePath, "content", "about.md")
+	samplePagePath := filepath.Join(projectPath, "content", "about.md")
 	if _, err := os.Stat(samplePagePath); os.IsNotExist(err) {
 		t.Errorf("Expected sample page to be created at '%s'", samplePagePath)
 	}
@@ -187,14 +187,14 @@ func TestCreateNewSite(t *testing.T) {
 	}
 
 	for _, template := range expectedTemplates {
-		path := filepath.Join(sitePath, "themes", "default", "layouts", template)
+		path := filepath.Join(projectPath, "themes", "default", "layouts", template)
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Errorf("Expected template '%s' to be created", path)
 		}
 	}
 
 	// Check that CSS file was created
-	cssPath := filepath.Join(sitePath, "themes", "default", "static", "css", "style.css")
+	cssPath := filepath.Join(projectPath, "themes", "default", "static", "css", "style.css")
 	if _, err := os.Stat(cssPath); os.IsNotExist(err) {
 		t.Errorf("Expected CSS file to be created at '%s'", cssPath)
 	}
