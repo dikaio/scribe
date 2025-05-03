@@ -30,7 +30,7 @@ jobs:
         run: |
           if [ ! -f .goreleaser.yml ]; then
             echo "Creating default .goreleaser.yml"
-            cat > .goreleaser.yml << 'EOF'
+            cat > .goreleaser.yml << EOF
 project_name: scribe
 
 before:
