@@ -39,29 +39,66 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Extract version
+        id: extract-version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
+          
+      - name: Checkout homebrew-tap repository
         uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v4
         with:
-          go-version: '1.24'
-          check-latest: true
-
+          repository: dikaio/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+          
+      - name: Download release tarball and calculate SHA256
+        run: |
+          VERSION=${{ steps.extract-version.outputs.version }}
+          TARBALL_URL="https://github.com/dikaio/scribe/archive/refs/tags/${VERSION}.tar.gz"
+          
+          # Wait for the release to be available (can take a moment after GoReleaser completes)
+          for i in {1..10}; do
+            echo "Attempt $i: Checking if release tarball is available..."
+            if curl -s --head --fail "$TARBALL_URL" > /dev/null; then
+              echo "Release tarball is available!"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "Release tarball not available after 10 attempts. Exiting."
+              exit 1
+            fi
+            echo "Waiting 10 seconds before next attempt..."
+            sleep 10
+          done
+          
+          # Download and calculate SHA256
+          curl -L -o scribe.tar.gz "$TARBALL_URL"
+          SHA256=$(sha256sum scribe.tar.gz | awk '{print $1}')
+          echo "sha256=${SHA256}" >> $GITHUB_OUTPUT
+          
+          echo "Version: ${VERSION}"
+          echo "SHA256: ${SHA256}"
+      
       - name: Update Homebrew Formula
         id: update-formula
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          VERSION=${VERSION#v}
-          
-          # Download the release tarball to calculate its SHA256
-          TARBALL_URL="https://github.com/dikaio/scribe/archive/refs/tags/v${VERSION}.tar.gz"
-          curl -L -o scribe.tar.gz "$TARBALL_URL"
+          VERSION=${{ steps.extract-version.outputs.version }}
           SHA256=$(sha256sum scribe.tar.gz | awk '{print $1}')
           
           # Update the formula
-          sed -i "s|url \".*\"|url \"$TARBALL_URL\"|" .github/homebrew/scribe.rb
-          sed -i "s|sha256 \".*\"|sha256 \"$SHA256\"|" .github/homebrew/scribe.rb
+          cd homebrew-tap
+          sed -i "s|url \".*\"|url \"https://github.com/dikaio/scribe/archive/refs/tags/${VERSION}.tar.gz\"|" Formula/scribe.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${SHA256}\"|" Formula/scribe.rb
           
-          # Create pull request to homebrew-core
-          echo "Formula updated with version v${VERSION} and SHA256 ${SHA256}"
+          # Set Git config
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Commit and push changes
+          git add Formula/scribe.rb
+          git commit -m "Update scribe to ${VERSION}"
+          git push
+          
+          echo "Formula updated with version ${VERSION} and SHA256 ${SHA256}"
