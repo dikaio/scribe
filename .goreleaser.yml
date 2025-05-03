@@ -44,22 +44,7 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^chore:'
-      - Merge pull request
-      - Merge branch
-
-brews:
-  - name: scribe
-    homepage: "https://github.com/dikaio/scribe"
-    description: "A lightweight static site generator built in pure Go with zero external dependencies"
-    license: "MIT"
-    tap:
-      owner: dikaio
-      name: homebrew-tap
-    folder: Formula
-    install: |
-      bin.install "scribe"
-    test: |
-      system "#{bin}/scribe", "--version"
+      - "^docs:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"

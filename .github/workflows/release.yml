@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,64 +26,6 @@ jobs:
       - name: Run tests
         run: go test ./...
 
-      - name: Create .goreleaser.yml if it doesn't exist
-        run: |
-          if [ ! -f .goreleaser.yml ]; then
-            echo "Creating default .goreleaser.yml"
-            cat > .goreleaser.yml << 'EOF'
-            project_name: scribe
-            
-            before:
-              hooks:
-                - go mod tidy
-            
-            builds:
-              - env:
-                  - CGO_ENABLED=0
-                goos:
-                  - linux
-                  - darwin
-                  - windows
-                goarch:
-                  - amd64
-                  - arm64
-                main: ./cmd/scribe/main.go
-                ldflags:
-                  - -s -w
-                  - -X github.com/dikaio/scribe/pkg/cli.Version={{.Version}}
-                  - -X github.com/dikaio/scribe/pkg/cli.Commit={{.Commit}}
-                  - -X github.com/dikaio/scribe/pkg/cli.Date={{.Date}}
-                binary: scribe
-            
-            archives:
-              - format: tar.gz
-                name_template: >-
-                  {{.ProjectName}}_
-                  {{- .Version}}_
-                  {{- .Os}}_
-                  {{- if eq .Arch "amd64" }}x86_64
-                  {{- else }}{{ .Arch }}{{ end }}
-                format_overrides:
-                  - goos: windows
-                    format: zip
-            
-            checksum:
-              name_template: 'checksums.txt'
-            
-            snapshot:
-              name_template: "{{ incpatch .Version }}-next"
-            
-            changelog:
-              sort: asc
-              filters:
-                exclude:
-                  - "^docs:"
-                  - "^test:"
-                  - "Merge pull request"
-                  - "Merge branch"
-            EOF
-          fi
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
@@ -93,8 +35,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  update-homebrew:
-    needs: release
+  homebrew-tap:
+    needs: goreleaser
     runs-on: ubuntu-latest
     steps:
       - name: Extract version
@@ -103,30 +45,38 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
-          
-      - name: Checkout homebrew-tap repository
+
+      - name: Checkout homebrew tap
         uses: actions/checkout@v3
         with:
           repository: dikaio/homebrew-tap
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           path: homebrew-tap
-          
-      - name: Download release tarball and calculate SHA256
+
+      - name: Update formula
+        working-directory: homebrew-tap
         run: |
-          VERSION=${{ steps.extract-version.outputs.version }}
-          TARBALL_URL="https://github.com/dikaio/scribe/archive/refs/tags/${VERSION}.tar.gz"
+          VERSION="${{ steps.extract-version.outputs.version }}"
+          VERSION_NO_V="${{ steps.extract-version.outputs.version_no_v }}"
           
-          # Wait for the release to be available (can take a moment after GoReleaser completes)
-          for i in {1..10}; do
-            echo "Attempt $i: Checking if release tarball is available..."
+          # Wait for release to be published and calculate SHA256
+          TARBALL_URL="https://github.com/dikaio/scribe/archive/refs/tags/${VERSION}.tar.gz"
+          MAX_ATTEMPTS=10
+          ATTEMPT=1
+          
+          while true; do
+            echo "Attempt ${ATTEMPT}/${MAX_ATTEMPTS}: Checking if release tarball is available..."
             if curl -s --head --fail "$TARBALL_URL" > /dev/null; then
               echo "Release tarball is available!"
               break
             fi
-            if [ $i -eq 10 ]; then
-              echo "Release tarball not available after 10 attempts. Exiting."
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "Release tarball not available after ${MAX_ATTEMPTS} attempts. Exiting."
               exit 1
             fi
+            
+            ATTEMPT=$((ATTEMPT + 1))
             echo "Waiting 10 seconds before next attempt..."
             sleep 10
           done
@@ -134,29 +84,16 @@ jobs:
           # Download and calculate SHA256
           curl -L -o scribe.tar.gz "$TARBALL_URL"
           SHA256=$(sha256sum scribe.tar.gz | awk '{print $1}')
-          echo "sha256=${SHA256}" >> $GITHUB_OUTPUT
           
-          echo "Version: ${VERSION}"
-          echo "SHA256: ${SHA256}"
-      
-      - name: Update Homebrew Formula
-        id: update-formula
-        run: |
-          VERSION=${{ steps.extract-version.outputs.version }}
-          SHA256=$(sha256sum scribe.tar.gz | awk '{print $1}')
-          
-          # Update the formula
-          cd homebrew-tap
+          # Update formula file
           sed -i "s|url \".*\"|url \"https://github.com/dikaio/scribe/archive/refs/tags/${VERSION}.tar.gz\"|" Formula/scribe.rb
           sed -i "s|sha256 \".*\"|sha256 \"${SHA256}\"|" Formula/scribe.rb
           
-          # Set Git config
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          # Setup git
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Commit and push changes
+          # Commit and push
           git add Formula/scribe.rb
-          git commit -m "Update scribe to ${VERSION}"
+          git commit -m "Update scribe to ${VERSION}" || echo "No changes to commit"
           git push
-          
-          echo "Formula updated with version ${VERSION} and SHA256 ${SHA256}"
