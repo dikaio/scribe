@@ -83,7 +83,7 @@ echo -e "${YELLOW}Tests temporarily skipped for demonstration${NC}"
 # fi
 
 # Get current version from Go code
-CURRENT_VERSION=$(grep 'Version = "v\?[0-9]\+\.[0-9]\+\.[0-9]\+"' pkg/cli/cli.go | sed 's/.*Version = "\(v\?\)\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\2/')
+CURRENT_VERSION=$(grep 'Version = "v[0-9]\+\.[0-9]\+\.[0-9]\+"' pkg/cli/cli.go | sed 's/.*Version = "v\([0-9]\+\.[0-9]\+\.[0-9]\+\)".*/\1/')
 
 echo -e "${GREEN}Current version: v${CURRENT_VERSION}${NC}"
 
@@ -149,7 +149,7 @@ echo -e "$CHANGELOG_CONTENT"
 
 # Update version in code
 echo -e "${YELLOW}Updating version in code...${NC}"
-sed -i.bak "s/Version = \".*\"/Version = \"v${NEW_VERSION}\"/" pkg/cli/cli.go
+sed -i.bak "s/Version = \"v[0-9]\+\.[0-9]\+\.[0-9]\+\"/Version = \"v${NEW_VERSION}\"/" pkg/cli/cli.go
 rm pkg/cli/cli.go.bak
 
 # Update CHANGELOG.md if it exists

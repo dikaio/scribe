@@ -1,16 +1,3 @@
-## v	Version = "v0.3.0 (2025-05-03)
-
-### Features
-
-- feat: automate Homebrew formula updates on release
-
-### Other Changes
-
-- chore: prepare for v0.2.0 release
-- chore: release v.1.0
-- chore: update Homebrew formula to v.1.0
-
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
