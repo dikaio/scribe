@@ -20,21 +20,34 @@ Scribe is a minimalist static site generator that transforms Markdown content wi
 
 ## Installation
 
+Scribe is designed to be installed globally and used as a command-line tool. We offer two simple installation methods:
+
 ### Option 1: Install with Go (All Platforms)
 
 ```bash
 go install github.com/dikaio/scribe@latest
 ```
 
-This will install the latest version of Scribe globally. Ensure your Go bin directory is in your PATH.
+This installs the latest version globally. Ensure your Go bin directory is in your PATH.
 
 ### Option 2: Install with Homebrew (macOS & Linux)
 
 ```bash
+brew tap dikaio/tap
 brew install scribe
 ```
 
-This will install Scribe and handle all dependencies automatically.
+This handles installation and dependencies automatically.
+
+### Verifying Installation
+
+After installation, verify Scribe is properly installed:
+
+```bash
+scribe version
+```
+
+You should see the version information displayed.
 
 ## Quick Start
 
