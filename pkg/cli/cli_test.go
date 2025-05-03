@@ -118,8 +118,26 @@ func TestCreateNewSite(t *testing.T) {
 	// Create app
 	app := NewApp()
 
+	// Mock stdin to provide interactive input
+	oldStdin := os.Stdin
+	// Create a pipe to simulate user input
+	r, w, _ := os.Pipe()
+	os.Stdin = r
+	
+	// Write mock input for interactive prompts
+	// Empty selection for template (default to "none")
+	// "n" for git init prompt
+	go func() {
+		defer w.Close()
+		w.Write([]byte("\nn\n"))
+	}()
+	
 	// Create new site
 	err = app.createNewSite(sitePath)
+	
+	// Restore stdin
+	os.Stdin = oldStdin
+	
 	if err != nil {
 		t.Fatalf("Failed to create new site: %v", err)
 	}

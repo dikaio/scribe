@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/dikaio/scribe/internal/build"
 	"github.com/dikaio/scribe/internal/config"
@@ -78,7 +80,7 @@ func (a *App) registerCommands() {
 	// New site command
 	a.Commands["new"] = Command{
 		Name:        "new",
-		Description: "Create a new site, post, or page",
+		Description: "Create a new site, post, or page interactively",
 		Action:      a.cmdNew,
 	}
 
@@ -125,6 +127,12 @@ func (a *App) showHelp() {
 	for _, cmd := range a.Commands {
 		fmt.Printf("  %-10s %s\n", cmd.Name, cmd.Description)
 	}
+	
+	fmt.Println("\nExamples:")
+	fmt.Printf("  %s new                  Create a new site in the current directory with interactive prompts\n", a.Name)
+	fmt.Printf("  %s new my-site          Create a new site in 'my-site' directory with interactive prompts\n", a.Name)
+	fmt.Printf("  %s serve                Start development server for the current directory\n", a.Name)
+	fmt.Printf("  %s build                Build the site in the current directory\n", a.Name)
 
 	fmt.Println("\nUse 'scribe help [command]' for more information about a command.")
 }
@@ -216,11 +224,20 @@ func (a *App) cmdConsole(args []string) error {
 
 // cmdNew implements commands for creating new resources (site, post, page, etc.)
 func (a *App) cmdNew(args []string) error {
+	// If no arguments, assume we're creating a new site
 	if len(args) < 1 {
-		return fmt.Errorf("missing resource type")
+		return a.createNewSite("")
 	}
 
-	resType := args[0]
+	// If first arg starts with a letter and not "site", "post", or "page", 
+	// treat it as a site name
+	firstArg := args[0]
+	if firstArg != "site" && firstArg != "post" && firstArg != "page" {
+		return a.createNewSite(firstArg)
+	}
+
+	// Otherwise, handle the classic way
+	resType := firstArg
 	name := ""
 	if len(args) > 1 {
 		name = args[1]
@@ -240,8 +257,13 @@ func (a *App) cmdNew(args []string) error {
 
 // createNewSite scaffolds a new site with default structure and templates
 func (a *App) createNewSite(name string) error {
-	// Use current directory if no name provided
+	// Prompt for name if not provided
 	sitePath := "."
+	if name == "" {
+		fmt.Print("Enter project name (leave empty to use current directory): ")
+		fmt.Scanln(&name)
+	}
+	
 	if name != "" {
 		sitePath = name
 		// Create site directory
@@ -250,7 +272,29 @@ func (a *App) createNewSite(name string) error {
 		}
 	}
 
-	fmt.Printf("Creating new Scribe site in '%s'...\n", sitePath)
+	// Prompt for template selection
+	template := "none"
+	fmt.Println("Select a template:")
+	fmt.Println("1) None (minimal)")
+	fmt.Println("2) Blog")
+	fmt.Println("3) Docs")
+	fmt.Println("4) Kitchen sink (all features)")
+	fmt.Print("Enter choice (1-4) [1]: ")
+	var choice string
+	fmt.Scanln(&choice)
+	
+	switch choice {
+	case "2":
+		template = "blog"
+	case "3":
+		template = "docs"
+	case "4":
+		template = "kitchen-sink"
+	default:
+		template = "none" // default to minimal if input is empty or invalid
+	}
+	
+	fmt.Printf("Creating new Scribe site in '%s' with '%s' template...\n", sitePath, template)
 
 	// Create directories
 	dirs := []string{
@@ -272,6 +316,19 @@ func (a *App) createNewSite(name string) error {
 
 	// Create default config file
 	cfg := config.DefaultConfig()
+	// Customize config based on template
+	switch template {
+	case "blog":
+		cfg.Title = "My Blog"
+		cfg.Description = "A blog created with Scribe"
+	case "docs":
+		cfg.Title = "Documentation"
+		cfg.Description = "Documentation site built with Scribe"
+	case "kitchen-sink":
+		cfg.Title = "Scribe Demo Site"
+		cfg.Description = "Showcasing all Scribe features"
+	}
+	
 	if err := cfg.Save(sitePath); err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
@@ -284,6 +341,32 @@ func (a *App) createNewSite(name string) error {
 	// Create default templates
 	if err := a.createDefaultTemplates(sitePath); err != nil {
 		return fmt.Errorf("failed to create default templates: %w", err)
+	}
+	
+	// Initialize git repository if requested
+	initGit := false
+	fmt.Print("Initialize git repository? [y/N]: ")
+	var gitChoice string
+	fmt.Scanln(&gitChoice)
+	gitChoice = strings.ToLower(gitChoice)
+	if gitChoice == "y" || gitChoice == "yes" {
+		initGit = true
+	}
+	
+	if initGit {
+		fmt.Println("Initializing git repository...")
+		gitCmd := exec.Command("git", "init", sitePath)
+		err := gitCmd.Run()
+		if err != nil {
+			fmt.Printf("Warning: Failed to initialize git repository: %v\n", err)
+		} else {
+			// Create .gitignore
+			gitignorePath := filepath.Join(sitePath, ".gitignore")
+			gitignoreContent := "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
+			if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
+				fmt.Printf("Warning: Failed to create .gitignore file: %v\n", err)
+			}
+		}
 	}
 
 	fmt.Println("Site created successfully!")
