@@ -14,6 +14,24 @@ Create a simplified HTML sanitizer inspired by bluemonday but:
 - Support for configurable allowed tags and attributes
 - Secure by default while remaining performant
 
+### Enhanced Markdown Parser
+Develop improved markdown parsing capabilities inspired by goldmark but with:
+- Cleaner, more maintainable architecture
+- Better extension points for custom syntax
+- Simpler AST representation
+- More efficient parsing algorithms
+- Support for common extensions (tables, strikethrough, task lists)
+- Focus on readability and maintainability over extreme optimization
+
+### HTMX-inspired Server-Side Interactions
+Implement server-side dynamic content capabilities inspired by HTMX but:
+- Using only Go standard library for backend implementation
+- Minimal JavaScript on the client side
+- Simple, elegant API for declaring interactive elements
+- Efficient partial page updates without full page reloads
+- Clean separation between content and interactivity
+- Focus on performance and reduced network overhead
+
 ## Usage
 
 Clone reference repositories here:
