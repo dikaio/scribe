@@ -1,0 +1,20 @@
+{{define "content"}}
+<h1>Recent Posts</h1>
+<div class="post-list">
+    {{range .Pages}}
+    <article class="post-summary">
+        <h2><a href="/{{.URL}}/">{{.Title}}</a></h2>
+        <p class="meta">
+            <time>{{formatDate .Date}}</time>
+            {{if .Tags}}
+            | Tags: 
+            {{range .Tags}}
+            <a href="/tags/{{.}}/">{{.}}</a>
+            {{end}}
+            {{end}}
+        </p>
+        <p>{{.Description}}</p>
+    </article>
+    {{end}}
+</div>
+{{end}}

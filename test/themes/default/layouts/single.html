@@ -1,0 +1,19 @@
+{{define "content"}}
+<article>
+    <header>
+        <h1>{{.Page.Title}}</h1>
+        <p class="meta">
+            <time>{{formatDate .Page.Date}}</time>
+            {{if .Page.Tags}}
+            | Tags: 
+            {{range .Page.Tags}}
+            <a href="/tags/{{.}}/">{{.}}</a>
+            {{end}}
+            {{end}}
+        </p>
+    </header>
+    <div class="content">
+        {{.Content}}
+    </div>
+</article>
+{{end}}
