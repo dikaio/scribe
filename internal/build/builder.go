@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/dikaio/scribe/internal/config"
 	"github.com/dikaio/scribe/internal/content"
@@ -41,27 +40,14 @@ func (b *Builder) SetQuiet(quiet bool) {
 
 // Build builds the site
 func (b *Builder) Build(sitePath string) error {
-	totalStart := time.Now()
-	if !b.quiet {
-		fmt.Println("Building site...")
-	}
-
 	// Initialize renderer
-	start := time.Now()
 	if err := b.renderer.Init(sitePath); err != nil {
 		return err
 	}
-	if !b.quiet {
-		fmt.Printf("Renderer initialized in %v\n", time.Since(start))
-	}
 
 	// Load content
-	start = time.Now()
 	if err := b.loadContent(sitePath); err != nil {
 		return err
-	}
-	if !b.quiet {
-		fmt.Printf("Content loaded in %v (%d pages)\n", time.Since(start), len(b.pages))
 	}
 
 	// Create output directory
@@ -71,43 +57,23 @@ func (b *Builder) Build(sitePath string) error {
 	}
 
 	// Copy static files
-	start = time.Now()
 	if err := b.copyStaticFiles(sitePath, outputPath); err != nil {
 		return err
 	}
-	if !b.quiet {
-		fmt.Printf("Static files copied in %v\n", time.Since(start))
-	}
 
 	// Generate pages in parallel
-	start = time.Now()
 	if err := b.generatePages(outputPath); err != nil {
 		return err
 	}
-	if !b.quiet {
-		fmt.Printf("Pages generated in %v\n", time.Since(start))
-	}
 
 	// Generate tag pages
-	start = time.Now()
 	if err := b.generateTagPages(outputPath); err != nil {
 		return err
 	}
-	if !b.quiet {
-		fmt.Printf("Tag pages generated in %v\n", time.Since(start))
-	}
 
 	// Generate home page
-	start = time.Now()
 	if err := b.generateHomePage(outputPath); err != nil {
 		return err
-	}
-	if !b.quiet {
-		fmt.Printf("Home page generated in %v\n", time.Since(start))
-	}
-
-	if !b.quiet {
-		fmt.Printf("Site built successfully in %v\n", time.Since(totalStart))
 	}
 	return nil
 }
@@ -157,7 +123,7 @@ func (b *Builder) loadContent(sitePath string) error {
 
 			// Skip draft pages in production
 			if page.Draft {
-				fmt.Printf("Skipping draft: %s\n", page.Title)
+				// Skip silently
 				continue
 			}
 
@@ -342,19 +308,14 @@ func (b *Builder) generatePages(outputPath string) error {
 	}
 
 	// Execute jobs in parallel
-	results, errors := parallelExecutor(jobs, worker)
+	_, errors := parallelExecutor(jobs, worker)
 	
 	// Check for errors
 	if len(errors) > 0 {
 		return errors[0]
 	}
 
-	// Report successful generations
-	if !b.quiet {
-		for _, result := range results {
-			fmt.Printf("Generated: %s\n", result.(string))
-		}
-	}
+	// Removed generation reporting
 
 	return nil
 }
@@ -427,19 +388,14 @@ func (b *Builder) generateTagPages(outputPath string) error {
 	}
 
 	// Execute jobs in parallel
-	results, errors := parallelExecutor(jobs, worker)
+	_, errors := parallelExecutor(jobs, worker)
 	
 	// Check for errors
 	if len(errors) > 0 {
 		return errors[0]
 	}
 
-	// Report successful generations
-	if !b.quiet {
-		for _, result := range results {
-			fmt.Printf("Generated tag page: %s\n", result.(string))
-		}
-	}
+	// Removed generation reporting
 
 	return nil
 }
