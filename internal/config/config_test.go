@@ -10,8 +10,8 @@ func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
 	// Check default values
-	if cfg.Title != "My Scribe Site" {
-		t.Errorf("Expected default title to be 'My Scribe Site', got %s", cfg.Title)
+	if cfg.Title != "Scribe" {
+		t.Errorf("Expected default title to be 'Scribe', got %s", cfg.Title)
 	}
 
 	if cfg.Theme != "default" {
@@ -33,7 +33,7 @@ func TestSaveAndLoadConfig(t *testing.T) {
 
 	// Create test configuration
 	testCfg := Config{
-		Title:         "Test Site",
+		Title:         "Test Scribe",
 		BaseURL:       "http://test.example.com/",
 		Theme:         "test-theme",
 		Language:      "fr",

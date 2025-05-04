@@ -81,6 +81,11 @@ This is an about page.
 	if err != nil {
 		t.Fatalf("Failed to initialize templates: %v", err)
 	}
+	
+	// Verify templates are ready
+	if console.tmpl == nil {
+		t.Fatalf("Templates were not initialized correctly")
+	}
 
 	// Return console and cleanup function
 	return console, tempDir, func() {
@@ -156,12 +161,23 @@ func TestHandleDashboard(t *testing.T) {
 	// Create a response recorder
 	rr := httptest.NewRecorder()
 
+	// Verify templates are available before calling handler
+	if c.tmpl == nil {
+		t.Fatalf("Templates are nil before handler call")
+	}
+	
 	// Call the handler
 	c.handleDashboard(rr, req)
 
 	// Check response status code
 	if rr.Code != http.StatusOK {
 		t.Errorf("Expected status OK, got %v", rr.Code)
+	}
+	
+	// Debug output
+	body := rr.Body.String()
+	if len(body) < 10 {
+		t.Logf("Response body is too short: %q", body)
 	}
 
 	// Check content type
@@ -171,7 +187,6 @@ func TestHandleDashboard(t *testing.T) {
 	}
 
 	// Check response body contains expected elements
-	body := rr.Body.String()
 	expectedElements := []string{
 		"Dashboard", 
 		"Test Site",

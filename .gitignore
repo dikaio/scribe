@@ -47,3 +47,4 @@ logs/
 # References directory - only keep README.md
 references/*
 !references/README.md
+**/.claude/settings.local.json

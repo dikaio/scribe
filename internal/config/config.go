@@ -25,7 +25,7 @@ type Config struct {
 // DefaultConfig returns the default configuration
 func DefaultConfig() Config {
 	return Config{
-		Title:         "My Scribe Site",
+		Title:         "Scribe",
 		BaseURL:       "http://example.com/",
 		Theme:         "default",
 		Language:      "en",

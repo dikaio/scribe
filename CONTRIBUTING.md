@@ -60,28 +60,70 @@ When you're ready to commit your changes:
 1. Create a pull request from your fork to the main repository
 2. Provide a clear description of the changes and their purpose
 3. Link any related issues in the pull request description
+4. Wait for GitHub Actions to run tests on your PR
+5. Address any feedback from reviewers
 
-### 5. Releases
+## Release Process
 
-Project maintainers will handle releases following this process:
+The release process is largely automated through GitHub Actions and scripts.
 
-1. Determine the appropriate release type:
-   - **patch**: For backwards-compatible bug fixes
-   - **minor**: For new features that are backwards-compatible
-   - **major**: For changes that break backward compatibility
+### Testing a Potential Release
 
-2. Run the release script with the appropriate release type:
+Before creating an official release, you can test the release process:
+
+1. Go to GitHub Actions > Pre-Release Testing
+2. Click "Run workflow"
+3. Select the version type (patch, minor, major)
+4. This will verify that the code builds and tests pass across all platforms without creating an actual release
+
+### Creating an Official Release
+
+Maintainers can create new releases using either of these methods:
+
+#### Option 1: Using the Release Script (Recommended)
+
+```bash
+# For a patch release (0.1.0 -> 0.1.1)
+./scripts/release.sh
+
+# For a minor release (0.1.0 -> 0.2.0)
+./scripts/release.sh --type minor
+
+# For a major release (0.1.0 -> 1.0.0)
+./scripts/release.sh --type major
+```
+
+The script will:
+- Verify your working directory is clean
+- Run tests
+- Calculate the new version
+- Generate a changelog from commit messages
+- Update version in code
+- Commit changes
+- Create and push a Git tag
+- Trigger GitHub Actions to build and publish the release
+
+#### Option 2: Manual Tag Creation
+
+Experienced maintainers can also create a release by:
+1. Updating the version in `pkg/cli/cli.go`
+2. Updating the CHANGELOG.md
+3. Committing these changes
+4. Creating and pushing a tag:
    ```bash
-   ./scripts/release.sh --type [patch|minor|major]
+   git tag -a "vX.Y.Z" -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
    ```
 
-   This script will:
-   - Update the version in the code
-   - Update the CHANGELOG.md
-   - Create a git tag
-   - Push changes to GitHub
+This will trigger the GitHub Actions release workflow automatically.
 
-3. Monitor the GitHub Actions workflow to ensure the release is properly published
+## Automated Release Process
+
+When a new tag is pushed, GitHub Actions automatically:
+
+1. Builds the binaries for all supported platforms
+2. Creates a GitHub release with these binaries
+3. Updates the Homebrew formula
 
 ## Code Style Guidelines
 

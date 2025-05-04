@@ -111,8 +111,20 @@ func (c *Console) handleDashboard(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	w.Header().Set("Content-Type", "text/html")
+	
+	// Debug template availability
+	if c.tmpl == nil {
+		errMsg := "Template is nil in handleDashboard"
+		fmt.Println(errMsg)
+		http.Error(w, errMsg, http.StatusInternalServerError)
+		return
+	}
+	
 	if err := c.tmpl.ExecuteTemplate(w, "dashboard", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errMsg := fmt.Sprintf("Template execution error: %v", err)
+		fmt.Println(errMsg) // Log error to console for debugging
+		http.Error(w, errMsg, http.StatusInternalServerError)
+		return
 	}
 }
 

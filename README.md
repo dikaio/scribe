@@ -1,12 +1,12 @@
 # Scribe
 
-A lightweight static project generator built in pure Go with zero external dependencies.
+A lightweight static site generator built in pure Go with zero external dependencies.
 
 > **IMPORTANT:** This codebase is not intended for production use. It has been developed as an educational project leveraging Claude Code. While functional, it lacks the testing, security reviews, and production hardening necessary for real-world deployment.
 
 ## Overview
 
-Scribe is a minimalist static project generator that transforms Markdown content with YAML front matter into elegant HTML websites. Built entirely with Go's standard library, it delivers exceptional performance without external dependencies.
+Scribe is a minimalist static site generator that transforms Markdown content with YAML front matter into elegant HTML websites. Built entirely with Go's standard library, it delivers exceptional performance without external dependencies.
 
 ## Features
 
@@ -51,20 +51,20 @@ You should see the version information displayed.
 
 ## Quick Start
 
-### Create a new project
+### Create a new site
 
 ```bash
-# Create a new project interactively
-scribe new myproject
+# Create a new site interactively
+scribe new mysite
 
-# Navigate to the project directory
-cd myproject
+# Navigate to the site directory
+cd mysite
 
 # Start the development server
 scribe serve
 ```
 
-Open your browser at [http://localhost:8080](http://localhost:8080) to see your new project.
+Open your browser at [http://localhost:8080](http://localhost:8080) to see your new site.
 
 ### Create content
 
@@ -94,17 +94,17 @@ scribe console
 
 Open your browser at [http://localhost:8090](http://localhost:8090) to access the console.
 
-## Project Structure
+## Site Structure
 
 ```
-myproject/
-├── config.jsonc       # Project configuration
+mysite/
+├── config.jsonc       # Site configuration
 ├── content/           # Content files (Markdown)
 │   ├── posts/         # Blog posts
 │   └── *.md           # Regular pages
 ├── layouts/           # Custom template layouts (optional)
 ├── static/            # Static files (copied as-is)
-└── themes/            # Project themes
+└── themes/            # Site themes
     └── default/       # Default theme
         ├── layouts/   # Theme layouts
         └── static/    # Theme static files
@@ -132,11 +132,11 @@ This is the body of the post written in Markdown.
 
 ## Configuration
 
-Project configuration is stored in `config.jsonc`:
+Site configuration is stored in `config.jsonc`:
 
 ```json
 {
-  "title": "My Scribe Project",
+  "title": "My Scribe Site",
   "baseURL": "http://example.com/",
   "theme": "default",
   "language": "en",
@@ -154,10 +154,10 @@ Project configuration is stored in `config.jsonc`:
 
 | Command                   | Description                                 |
 | ------------------------- | ------------------------------------------- |
-| `scribe build [path]`     | Build the project                           |
+| `scribe build [path]`     | Build the site                              |
 | `scribe serve [path]`     | Start a development server with live reload |
 | `scribe console [path]`   | Start the web management console            |
-| `scribe new [name]`       | Create a new project interactively          |
+| `scribe new [name]`       | Create a new site interactively             |
 | `scribe new post [title]` | Create a new blog post                      |
 | `scribe new page [title]` | Create a new page                           |
 | `scribe help`             | Show help information                       |
@@ -173,7 +173,7 @@ Scribe uses Go's `html/template` package for templating. Base templates include:
 
 Template data includes:
 
-- `.Site` - Project configuration
+- `.Site` - Site configuration
 - `.Page` - Current page information
 - `.Content` - Rendered page content
 - `.Pages` - List of pages (for list/home templates)
@@ -187,7 +187,7 @@ To create a custom theme:
 1. Create a new directory under `themes/`
 2. Add your templates in the `layouts/` subdirectory
 3. Add your static assets in the `static/` subdirectory
-4. Update your project's `config.jsonc` to use your theme name
+4. Update your site's `config.jsonc` to use your theme name
 
 ### Custom Layouts
 

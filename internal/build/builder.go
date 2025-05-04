@@ -172,14 +172,14 @@ func (b *Builder) loadContent(sitePath string) error {
 	return nil
 }
 
+// fileCopyJob represents a file copy operation
+type fileCopyJob struct {
+	SrcPath string
+	DstPath string
+}
+
 // copyStaticFiles copies static files to the output directory
 func (b *Builder) copyStaticFiles(sitePath, outputPath string) error {
-	// Define a file copy job
-	type fileCopyJob struct {
-		SrcPath string
-		DstPath string
-	}
-
 	var copyJobs []interface{}
 
 	// Collect theme static files
@@ -245,11 +245,6 @@ func (b *Builder) copyStaticFiles(sitePath, outputPath string) error {
 // collectFilesToCopy collects files to copy from source directory to destination
 func collectFilesToCopy(srcDir, dstDir string) ([]interface{}, error) {
 	var jobs []interface{}
-	
-	type fileCopyJob struct {
-		SrcPath string
-		DstPath string
-	}
 	
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
