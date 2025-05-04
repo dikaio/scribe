@@ -13,7 +13,7 @@ import (
 // createSiteEnhanced is a simplified version of createNewSite that just
 // asks for the site name and creates a default site with git initialization
 func (a *App) createSiteEnhanced(initialName string) error {
-	ui.Header("Create New Scribe Site")
+	ui.Header("Scribe")
 
 	// Prompt for site name
 	sitePath := "."
@@ -92,7 +92,18 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	// Success message
 	ui.Divider()
 	ui.Success("Site created successfully!")
-	ui.Info("Run 'scribe serve' to start the development server.")
+	
+	// Navigation instructions
+	if siteName != "" {
+		ui.Info(fmt.Sprintf("Next steps:"))
+		ui.Info(fmt.Sprintf("  cd %s", siteName))
+		ui.Info(fmt.Sprintf("  scribe serve"))
+		ui.Info(fmt.Sprintf("Then view your site at http://localhost:8080"))
+	} else {
+		ui.Info(fmt.Sprintf("Next steps:"))
+		ui.Info(fmt.Sprintf("  scribe serve"))
+		ui.Info(fmt.Sprintf("Then view your site at http://localhost:8080"))
+	}
 	
 	return nil
 }
