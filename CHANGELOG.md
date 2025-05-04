@@ -1,3 +1,14 @@
+## v0.4.5 (2025-05-04)
+
+### Bug Fixes
+
+- fix: improve goreleaser configuration to fix failing CI
+
+### Other Changes
+
+- chore: bump version to v0.4.4
+
+
 ## v0.4.3 (2025-05-04)
 
 ### Bug Fixes
