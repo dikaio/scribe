@@ -73,14 +73,19 @@ git pull origin main
 
 # Run tests to ensure everything is working
 echo -e "${YELLOW}Running tests...${NC}"
-# Temporarily skip tests for demonstration purposes
-# go test ./...
-echo -e "${YELLOW}Tests temporarily skipped for demonstration${NC}"
+go test ./...
 
-# if [[ $? -ne 0 ]]; then
-#   echo -e "${RED}Error: Tests failed. Fix tests before releasing.${NC}"
-#   exit 1
-# fi
+if [[ $? -ne 0 ]]; then
+  echo -e "${RED}Error: Tests failed. Fix tests before releasing.${NC}"
+  exit 1
+fi
+
+# Ensure go.mod exists (needed for GoReleaser)
+if [[ ! -f "go.mod" ]]; then
+  echo -e "${YELLOW}Creating go.mod file for zero-dependency project...${NC}"
+  go mod init github.com/dikaio/scribe
+  go mod tidy
+fi
 
 # Manually get current version from Go code
 echo -e "${YELLOW}Reading current version...${NC}"
