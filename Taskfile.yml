@@ -1,0 +1,76 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - go build -o bin/scribe ./cmd/scribe
+
+  install:
+    desc: Install the project
+    cmds:
+      - go install ./cmd/scribe
+
+  run:
+    desc: Run the application
+    cmds:
+      - go run ./cmd/scribe/main.go
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test ./...
+
+  test:console:
+    desc: Run console tests
+    cmds:
+      - go test ./internal/console -v
+
+  test:skip-console:
+    desc: Run all tests except console tests
+    cmds:
+      - go test $(go list ./... | grep -v console) -v
+
+  bench:
+    desc: Run benchmarks
+    cmds:
+      - go test -bench=. ./...
+
+  coverage:
+    desc: Generate test coverage
+    cmds:
+      - mkdir -p build/coverage
+      - go test ./... -coverprofile=build/coverage/coverage.out
+      - go tool cover -html=build/coverage/coverage.out -o build/coverage/coverage.html
+      - go tool cover -func=build/coverage/coverage.out
+
+  lint:
+    desc: Run Go linter
+    cmds:
+      - gofmt -s -w .
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/
+      - rm -rf build/
+
+  release:patch:
+    desc: Create a patch release
+    cmds:
+      - ./scripts/release.sh
+
+  release:minor:
+    desc: Create a minor release
+    cmds:
+      - ./scripts/release.sh --type minor
+
+  release:major:
+    desc: Create a major release
+    cmds:
+      - ./scripts/release.sh --type major
+
+  release:dry-run:
+    desc: Test the release process without making changes
+    cmds:
+      - ./scripts/release.sh --dry-run
