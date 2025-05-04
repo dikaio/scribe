@@ -4,13 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/dikaio/scribe/internal/build"
 	"github.com/dikaio/scribe/internal/config"
-	"github.com/dikaio/scribe/internal/content"
 	"github.com/dikaio/scribe/internal/server"
 	"github.com/dikaio/scribe/internal/templates"
 )
@@ -235,170 +232,20 @@ func (a *App) cmdNew(args []string) error {
 
 // createNewSite scaffolds a new site with default structure and templates
 func (a *App) createNewSite(name string) error {
-	// Prompt for name if not provided
-	sitePath := "."
-	if name == "" {
-		fmt.Print("Enter site name (leave empty to use current directory): ")
-		fmt.Scanln(&name)
-	}
-	
-	if name != "" {
-		sitePath = name
-		// Create site directory
-		if err := os.MkdirAll(sitePath, 0755); err != nil {
-			return fmt.Errorf("failed to create site directory: %w", err)
-		}
-	}
-
-	// Prompt for template selection
-	template := "none"
-	fmt.Println("Select a template:")
-	fmt.Println("1) None (minimal)")
-	fmt.Println("2) Blog")
-	fmt.Println("3) Docs")
-	fmt.Println("4) Kitchen sink (all features)")
-	fmt.Print("Enter choice (1-4) [1]: ")
-	var choice string
-	fmt.Scanln(&choice)
-	
-	switch choice {
-	case "2":
-		template = "blog"
-	case "3":
-		template = "docs"
-	case "4":
-		template = "kitchen-sink"
-	default:
-		template = "none" // default to minimal if input is empty or invalid
-	}
-	
-	fmt.Printf("Creating new Scribe site in '%s' with '%s' template...\n", sitePath, template)
-
-	// Create directories
-	dirs := []string{
-		"content",
-		"content/posts",
-		"layouts",
-		"static",
-		"themes/default",
-		"themes/default/layouts",
-		"themes/default/static",
-	}
-
-	for _, dir := range dirs {
-		path := filepath.Join(sitePath, dir)
-		if err := os.MkdirAll(path, 0755); err != nil {
-			return fmt.Errorf("failed to create directory '%s': %w", dir, err)
-		}
-	}
-
-	// Create default config file
-	cfg := config.DefaultConfig()
-	// Customize config based on template
-	switch template {
-	case "blog":
-		cfg.Title = "My Blog"
-		cfg.Description = "A blog created with Scribe"
-	case "docs":
-		cfg.Title = "Documentation"
-		cfg.Description = "Documentation site built with Scribe"
-	case "kitchen-sink":
-		cfg.Title = "Scribe Demo Site"
-		cfg.Description = "Showcasing all Scribe features"
-	}
-	
-	if err := cfg.Save(sitePath); err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
-	}
-
-	// Create sample content
-	if err := a.createSampleContent(sitePath); err != nil {
-		return fmt.Errorf("failed to create sample content: %w", err)
-	}
-
-	// Create default templates
-	if err := a.createDefaultTemplates(sitePath); err != nil {
-		return fmt.Errorf("failed to create default templates: %w", err)
-	}
-	
-	// Initialize git repository if requested
-	initGit := false
-	fmt.Print("Initialize git repository? [y/N]: ")
-	var gitChoice string
-	fmt.Scanln(&gitChoice)
-	gitChoice = strings.ToLower(gitChoice)
-	if gitChoice == "y" || gitChoice == "yes" {
-		initGit = true
-	}
-	
-	if initGit {
-		fmt.Println("Initializing git repository...")
-		gitCmd := exec.Command("git", "init", sitePath)
-		err := gitCmd.Run()
-		if err != nil {
-			fmt.Printf("Warning: Failed to initialize git repository: %v\n", err)
-		} else {
-			// Create .gitignore
-			gitignorePath := filepath.Join(sitePath, ".gitignore")
-			gitignoreContent := "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
-			if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
-				fmt.Printf("Warning: Failed to create .gitignore file: %v\n", err)
-			}
-		}
-	}
-
-	fmt.Println("Site created successfully!")
-	fmt.Println("Run 'scribe serve' to start the development server.")
-	return nil
+	// Use the enhanced version with improved UI
+	return a.createSiteEnhanced(name)
 }
 
 // createNewPost creates a new blog post
 func (a *App) createNewPost(title string) error {
-	// Prompt for title if not provided
-	if title == "" {
-		fmt.Print("Enter post title: ")
-		fmt.Scanln(&title)
-		if title == "" {
-			return fmt.Errorf("post title is required")
-		}
-	}
-
-	// Create content creator
-	creator := content.NewCreator(".")
-
-	// Create post
-	tags := []string{"uncategorized"}
-	filePath, err := creator.CreateContent(content.PostType, title, "", tags, false)
-	if err != nil {
-		return fmt.Errorf("failed to create post: %w", err)
-	}
-
-	fmt.Printf("Post created successfully: %s\n", filePath)
-	return nil
+	// Use the enhanced version with improved UI
+	return a.createPostEnhanced(title)
 }
 
 // createNewPage creates a new static page
 func (a *App) createNewPage(title string) error {
-	// Prompt for title if not provided
-	if title == "" {
-		fmt.Print("Enter page title: ")
-		fmt.Scanln(&title)
-		if title == "" {
-			return fmt.Errorf("page title is required")
-		}
-	}
-
-	// Create content creator
-	creator := content.NewCreator(".")
-
-	// Create page
-	filePath, err := creator.CreateContent(content.PageType, title, "", nil, false)
-	if err != nil {
-		return fmt.Errorf("failed to create page: %w", err)
-	}
-
-	fmt.Printf("Page created successfully: %s\n", filePath)
-	return nil
+	// Use the enhanced version with improved UI
+	return a.createPageEnhanced(title)
 }
 
 // createSampleContent creates sample content files for a new site
