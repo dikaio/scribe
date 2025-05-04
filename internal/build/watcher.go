@@ -13,6 +13,7 @@ type Watcher struct {
 	sitePath    string
 	lastBuild   time.Time
 	changedDirs map[string]time.Time
+	quiet       bool
 }
 
 // NewWatcher creates a new file watcher
@@ -22,7 +23,13 @@ func NewWatcher(builder *Builder, sitePath string) *Watcher {
 		sitePath:    sitePath,
 		lastBuild:   time.Now(),
 		changedDirs: make(map[string]time.Time),
+		quiet:       false,
 	}
+}
+
+// SetQuiet sets the quiet mode for the watcher
+func (w *Watcher) SetQuiet(quiet bool) {
+	w.quiet = quiet
 }
 
 // Watch starts watching for file changes
@@ -30,7 +37,9 @@ func (w *Watcher) Watch(interval time.Duration, rebuild func() error) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	fmt.Println("Watching for changes. Press Ctrl+C to stop.")
+	if !w.quiet {
+		fmt.Println("Watching for changes. Press Ctrl+C to stop.")
+	}
 
 	for range ticker.C {
 		changed, err := w.checkForChanges()
@@ -39,11 +48,17 @@ func (w *Watcher) Watch(interval time.Duration, rebuild func() error) error {
 		}
 
 		if changed {
-			fmt.Println("Changes detected, rebuilding...")
+			if !w.quiet {
+				fmt.Println("Changes detected, rebuilding...")
+			}
+			
 			if err := rebuild(); err != nil {
+				// Always show errors, even in quiet mode
 				fmt.Printf("Error rebuilding: %s\n", err)
 			} else {
-				fmt.Println("Rebuild complete.")
+				if !w.quiet {
+					fmt.Println("Rebuild complete.")
+				}
 				w.lastBuild = time.Now()
 			}
 		}

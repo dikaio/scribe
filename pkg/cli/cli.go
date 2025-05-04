@@ -185,7 +185,7 @@ func (a *App) cmdServe(args []string) error {
 
 	// Initialize the server (default port: 8080)
 	port := 8080
-	server := server.NewServer(cfg, port)
+	server := server.NewServer(cfg, port, true) // true = quiet mode
 
 	// Start the server
 	err = server.Start(sitePath)

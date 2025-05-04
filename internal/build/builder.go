@@ -20,6 +20,7 @@ type Builder struct {
 	renderer *render.Renderer
 	pages    []content.Page
 	tags     map[string][]content.Page
+	quiet    bool
 }
 
 // NewBuilder creates a new site builder
@@ -29,27 +30,39 @@ func NewBuilder(cfg config.Config) *Builder {
 		renderer: render.NewRenderer(cfg),
 		pages:    []content.Page{},
 		tags:     make(map[string][]content.Page),
+		quiet:    false,
 	}
+}
+
+// SetQuiet sets the quiet mode for the builder
+func (b *Builder) SetQuiet(quiet bool) {
+	b.quiet = quiet
 }
 
 // Build builds the site
 func (b *Builder) Build(sitePath string) error {
 	totalStart := time.Now()
-	fmt.Println("Building site...")
+	if !b.quiet {
+		fmt.Println("Building site...")
+	}
 
 	// Initialize renderer
 	start := time.Now()
 	if err := b.renderer.Init(sitePath); err != nil {
 		return err
 	}
-	fmt.Printf("Renderer initialized in %v\n", time.Since(start))
+	if !b.quiet {
+		fmt.Printf("Renderer initialized in %v\n", time.Since(start))
+	}
 
 	// Load content
 	start = time.Now()
 	if err := b.loadContent(sitePath); err != nil {
 		return err
 	}
-	fmt.Printf("Content loaded in %v (%d pages)\n", time.Since(start), len(b.pages))
+	if !b.quiet {
+		fmt.Printf("Content loaded in %v (%d pages)\n", time.Since(start), len(b.pages))
+	}
 
 	// Create output directory
 	outputPath := filepath.Join(sitePath, b.config.OutputDir)
@@ -62,30 +75,40 @@ func (b *Builder) Build(sitePath string) error {
 	if err := b.copyStaticFiles(sitePath, outputPath); err != nil {
 		return err
 	}
-	fmt.Printf("Static files copied in %v\n", time.Since(start))
+	if !b.quiet {
+		fmt.Printf("Static files copied in %v\n", time.Since(start))
+	}
 
 	// Generate pages in parallel
 	start = time.Now()
 	if err := b.generatePages(outputPath); err != nil {
 		return err
 	}
-	fmt.Printf("Pages generated in %v\n", time.Since(start))
+	if !b.quiet {
+		fmt.Printf("Pages generated in %v\n", time.Since(start))
+	}
 
 	// Generate tag pages
 	start = time.Now()
 	if err := b.generateTagPages(outputPath); err != nil {
 		return err
 	}
-	fmt.Printf("Tag pages generated in %v\n", time.Since(start))
+	if !b.quiet {
+		fmt.Printf("Tag pages generated in %v\n", time.Since(start))
+	}
 
 	// Generate home page
 	start = time.Now()
 	if err := b.generateHomePage(outputPath); err != nil {
 		return err
 	}
-	fmt.Printf("Home page generated in %v\n", time.Since(start))
+	if !b.quiet {
+		fmt.Printf("Home page generated in %v\n", time.Since(start))
+	}
 
-	fmt.Printf("Site built successfully in %v\n", time.Since(totalStart))
+	if !b.quiet {
+		fmt.Printf("Site built successfully in %v\n", time.Since(totalStart))
+	}
 	return nil
 }
 
@@ -327,8 +350,10 @@ func (b *Builder) generatePages(outputPath string) error {
 	}
 
 	// Report successful generations
-	for _, result := range results {
-		fmt.Printf("Generated: %s\n", result.(string))
+	if !b.quiet {
+		for _, result := range results {
+			fmt.Printf("Generated: %s\n", result.(string))
+		}
 	}
 
 	return nil
@@ -410,8 +435,10 @@ func (b *Builder) generateTagPages(outputPath string) error {
 	}
 
 	// Report successful generations
-	for _, result := range results {
-		fmt.Printf("Generated tag page: %s\n", result.(string))
+	if !b.quiet {
+		for _, result := range results {
+			fmt.Printf("Generated tag page: %s\n", result.(string))
+		}
 	}
 
 	return nil
