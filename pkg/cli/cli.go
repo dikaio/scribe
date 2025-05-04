@@ -178,7 +178,8 @@ func (a *App) cmdBuild(args []string) error {
 // cmdServe implements the serve command, which starts a development server with live reload.
 // It takes an optional path argument (or uses the current directory if not provided).
 func (a *App) cmdServe(args []string) error {
-	sitePath, cfg, err := a.getSitePathAndConfig(args, "Starting development server for")
+	// Don't show the "Starting development server..." message
+	sitePath, cfg, err := a.getSitePathAndConfig(args, "")
 	if err != nil {
 		return err
 	}

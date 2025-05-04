@@ -37,9 +37,7 @@ func (w *Watcher) Watch(interval time.Duration, rebuild func() error) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	if !w.quiet {
-		fmt.Println("Watching for changes. Press Ctrl+C to stop.")
-	}
+	// Message moved to server.go
 
 	for range ticker.C {
 		changed, err := w.checkForChanges()

@@ -66,11 +66,9 @@ func (s *Server) Start(sitePath string) error {
 		}
 	}()
 
-	// Start HTTP server - always show the URL regardless of quiet mode
+	// Start HTTP server - always show these minimal messages
 	fmt.Printf("Server running at http://localhost:%d/\n", s.port)
-	if !s.quiet {
-		fmt.Println("Watching for changes. Press Ctrl+C to stop.")
-	}
+	fmt.Println("Watching for changes. Press Ctrl+C to stop.")
 	
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.port), http.FileServer(http.Dir(outputPath)))
 }
