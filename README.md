@@ -15,7 +15,6 @@ Scribe is a minimalist static site generator that transforms Markdown content wi
 - **Templating system** - Use Go's html/template for layouts and themes
 - **Live reload development server** - See changes as you make them
 - **Command-line interface** - Simple commands for common operations
-- **Web management console** - Manage your site through a browser interface
 - **Zero dependencies** - Built using only the Go standard library
 
 ## Installation
@@ -85,14 +84,6 @@ scribe build
 
 The built site will be in the `public` directory by default.
 
-### Launch the web console
-
-```bash
-# Start the web-based management console
-scribe console
-```
-
-Open your browser at [http://localhost:8090](http://localhost:8090) to access the console.
 
 ## Site Structure
 
@@ -156,7 +147,6 @@ Site configuration is stored in `config.jsonc`:
 | ------------------------- | ------------------------------------------- |
 | `scribe build [path]`     | Build the site                              |
 | `scribe serve [path]`     | Start a development server with live reload |
-| `scribe console [path]`   | Start the web management console            |
 | `scribe new [name]`       | Create a new site interactively             |
 | `scribe new post [title]` | Create a new blog post                      |
 | `scribe new page [title]` | Create a new page                           |

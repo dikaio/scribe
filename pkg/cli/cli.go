@@ -10,7 +10,6 @@ import (
 
 	"github.com/dikaio/scribe/internal/build"
 	"github.com/dikaio/scribe/internal/config"
-	"github.com/dikaio/scribe/internal/console"
 	"github.com/dikaio/scribe/internal/content"
 	"github.com/dikaio/scribe/internal/server"
 	"github.com/dikaio/scribe/internal/templates"
@@ -70,12 +69,6 @@ func (a *App) registerCommands() {
 		Action:      a.cmdServe,
 	}
 
-	// Console command
-	a.Commands["console"] = Command{
-		Name:        "console",
-		Description: "Start the console",
-		Action:      a.cmdConsole,
-	}
 
 	// New site command
 	a.Commands["new"] = Command{
@@ -206,21 +199,6 @@ func (a *App) cmdServe(args []string) error {
 	return nil
 }
 
-// cmdConsole implements the console command, which starts the web management interface.
-// It takes an optional path argument (or uses the current directory if not provided).
-func (a *App) cmdConsole(args []string) error {
-	sitePath, cfg, err := a.getSitePathAndConfig(args, "Starting console for")
-	if err != nil {
-		return err
-	}
-
-	// Initialize console (default port: 8090)
-	port := 8090
-	console := console.NewConsole(cfg, sitePath, port)
-
-	// Start the console
-	return console.Start()
-}
 
 // cmdNew implements commands for creating new resources (site, post, page, etc.)
 func (a *App) cmdNew(args []string) error {

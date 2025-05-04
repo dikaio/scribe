@@ -26,7 +26,7 @@ func TestNewApp(t *testing.T) {
 	}
 
 	// Check that commands were registered
-	expectedCommands := []string{"build", "serve", "console", "new"}
+	expectedCommands := []string{"build", "serve", "new"}
 	for _, cmd := range expectedCommands {
 		if _, exists := app.Commands[cmd]; !exists {
 			t.Errorf("Expected command '%s' to be registered", cmd)
@@ -45,7 +45,7 @@ func TestRegisterCommands(t *testing.T) {
 	app.registerCommands()
 
 	// Check that all expected commands are registered
-	expectedCommands := []string{"build", "serve", "console", "new"}
+	expectedCommands := []string{"build", "serve", "new"}
 	for _, cmd := range expectedCommands {
 		if _, exists := app.Commands[cmd]; !exists {
 			t.Errorf("Expected command '%s' to be registered", cmd)

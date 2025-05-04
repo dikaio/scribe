@@ -14,22 +14,13 @@ tasks:
   run:
     desc: Run the application
     cmds:
-      - go run ./cmd/scribe/main.go
+      - go run ./cmd/scribe
 
   test:
     desc: Run all tests
     cmds:
       - go test ./...
 
-  test:console:
-    desc: Run console tests
-    cmds:
-      - go test ./internal/console -v
-
-  test:skip-console:
-    desc: Run all tests except console tests
-    cmds:
-      - go test $(go list ./... | grep -v console) -v
 
   bench:
     desc: Run benchmarks
@@ -74,3 +65,10 @@ tasks:
     desc: Test the release process without making changes
     cmds:
       - ./scripts/release.sh --dry-run
+      
+  fix:static-files:
+    desc: Fix interface conversion issue with fileCopyJob
+    cmds:
+      - rm -rf ./bin/*
+      - go clean -cache
+      - go build -o bin/scribe ./cmd/scribe
