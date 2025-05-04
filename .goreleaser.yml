@@ -1,5 +1,13 @@
 project_name: scribe
 
+# Completely disable the dependency resolution
+# This is a zero-dependency project, so no need to check deps
+gomod:
+  proxy: false
+  env:
+    - GOSUMDB=off
+  mod: readonly
+
 before:
   hooks:
     - go mod tidy

@@ -23,7 +23,15 @@ jobs:
           go-version: '1.24'
           check-latest: true
 
-      # Skip caching since we have no external dependencies
+      # Make sure our go.mod exists and is valid
+      - name: Prepare environment
+        run: |
+          # Ensure go.mod exists (if not already)
+          if [ ! -f go.mod ]; then
+            go mod init github.com/dikaio/scribe
+          fi
+          go mod tidy
+          touch go.sum  # Create an empty go.sum file if it doesn't exist
 
       - name: Run tests
         run: go test ./...
