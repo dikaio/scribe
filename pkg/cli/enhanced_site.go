@@ -20,7 +20,7 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	siteName := initialName
 	
 	if siteName == "" {
-		siteName = ui.Prompt("Site Name (leave empty to use current directory)", "")
+		siteName = ui.Prompt("Enter site name:", "")
 	}
 	
 	if siteName != "" {
