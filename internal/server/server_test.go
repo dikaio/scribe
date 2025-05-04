@@ -18,7 +18,7 @@ func TestNewServer(t *testing.T) {
 	}
 
 	// Create server
-	s := NewServer(cfg, 8080)
+	s := NewServer(cfg, 8080, true)
 
 	// Check that the server was created successfully
 	if s == nil {
@@ -116,7 +116,7 @@ func TestCreateOutputDir(t *testing.T) {
 	}
 
 	// Create server
-	s := NewServer(cfg, 8080)
+	s := NewServer(cfg, 8080, true)
 
 	// We'll just test the output directory creation part of Start
 	outputPath := filepath.Join(tempDir, s.config.OutputDir)
