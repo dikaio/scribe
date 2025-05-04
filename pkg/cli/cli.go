@@ -18,7 +18,7 @@ import (
 // Version information set by build flags
 var (
 	// Version is the semantic version of the application
-	Version = "v0.4.5"
+	Version = "v0.4.8"
 	// Commit is the git commit SHA at build time
 	Commit = "none" 
 	// Date is the build date
