@@ -1,3 +1,23 @@
+## v0.4.9 (2025-05-04)
+
+### Features
+
+- feat: completely remove all build output messages
+- feat: further simplify server output to only show URL and watching message
+- feat: add quiet mode to reduce verbose output from server
+- feat: simplify site name prompt text
+- feat: improve site creation messaging and instructions
+- feat: simplify site creation to only ask for name and auto-initialize git
+- feat: add arrow key navigation for interactive CLI selections
+- feat: enhance CLI with improved UI components using standard library
+
+### Other Changes
+
+- chore: add test directory with sample site files
+- refactor: move example site files from app/ to test/ directory and update server tests to support quiet mode
+- refactor: improve selection UI with colored indicators instead of arrow keys
+
+
 ## v0.4.5 (2025-05-04)
 
 ### Bug Fixes
