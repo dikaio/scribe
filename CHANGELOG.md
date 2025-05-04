@@ -1,3 +1,18 @@
+## v0.3.2 (2025-05-04)
+
+### Features
+
+- feat: add Taskfile for development workflow
+
+### Bug Fixes
+
+- fix: correct GoReleaser configuration for zero-dependency project
+
+### Other Changes
+
+- refactor: remove console functionality
+
+
 ## v0.3.1 (2025-05-04)
 
 
