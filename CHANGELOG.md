@@ -1,3 +1,15 @@
+## v0.4.3 (2025-05-04)
+
+### Bug Fixes
+
+- fix: resolve GoReleaser dependency check issues
+
+### Other Changes
+
+- chore: update config.jsonc
+- chore: bump version to v0.4.2 and add empty go.sum
+
+
 ## v0.3.2 (2025-05-04)
 
 ### Features
