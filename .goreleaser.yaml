@@ -1,0 +1,64 @@
+# Simple configuration for GoReleaser
+project_name: scribe
+
+# Completely disable the dependency resolution
+gomod:
+  proxy: false
+  env:
+    - GOSUMDB=off
+  mod: readonly
+
+before:
+  hooks:
+    - go mod tidy
+
+# Basic build configuration
+builds:
+  - binary: scribe
+    id: scribe
+    main: ./cmd/scribe
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/dikaio/scribe/pkg/cli.Version={{.Version}}
+      - -X github.com/dikaio/scribe/pkg/cli.Commit={{.Commit}}
+      - -X github.com/dikaio/scribe/pkg/cli.Date={{.Date}}
+
+# Archive naming configuration
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{.ProjectName}}_
+      {{- .Version}}_
+      {{- .Os}}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+# Checksum configuration
+checksum:
+  name_template: 'checksums.txt'
+
+# Snapshot configuration for development builds
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+# Changelog settings
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"
