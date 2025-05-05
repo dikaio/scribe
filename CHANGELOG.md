@@ -1,3 +1,10 @@
+## v0.4.10 (2025-05-05)
+
+### Other Changes
+
+- refactor: reduce codebase size and consolidate functionality
+
+
 ## v0.4.9 (2025-05-04)
 
 ### Features
