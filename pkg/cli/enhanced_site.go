@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/dikaio/scribe/internal/config"
+	"github.com/dikaio/scribe/internal/templates"
 	"github.com/dikaio/scribe/internal/ui"
 )
 
@@ -30,6 +31,14 @@ func (a *App) createSiteEnhanced(initialName string) error {
 			return fmt.Errorf("failed to create site directory: %w", err)
 		}
 	}
+
+	// Prompt for CSS framework
+	cssOptions := []ui.Option{
+		{Label: "Default CSS (Simple, no dependencies)", Value: "default"},
+		{Label: "Tailwind CSS (Utility-first CSS framework)", Value: "tailwind"},
+	}
+	cssChoice := ui.SelectOption("CSS Framework", "Choose a CSS framework for your site", cssOptions, 0)
+	useTailwind := cssChoice == "tailwind"
 
 	// Display banner
 	ui.Info(fmt.Sprintf("Creating new Scribe site in '%s'...", sitePath))
@@ -69,8 +78,8 @@ func (a *App) createSiteEnhanced(initialName string) error {
 		return fmt.Errorf("failed to create sample content: %w", err)
 	}
 
-	// Create default templates
-	if err := a.createDefaultTemplates(sitePath); err != nil {
+	// Create templates based on CSS choice
+	if err := a.createDefaultTemplates(sitePath, useTailwind); err != nil {
 		return fmt.Errorf("failed to create default templates: %w", err)
 	}
 	
@@ -81,9 +90,15 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	if err != nil {
 		ui.Warning(fmt.Sprintf("Failed to initialize git repository: %v", err))
 	} else {
-		// Create .gitignore
+		// Create .gitignore with appropriate content
 		gitignorePath := filepath.Join(sitePath, ".gitignore")
 		gitignoreContent := "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
+		
+		// Add Node.js entries if using Tailwind
+		if useTailwind {
+			gitignoreContent = templates.TailwindGitignore
+		}
+		
 		if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
 			ui.Warning(fmt.Sprintf("Failed to create .gitignore file: %v", err))
 		}
@@ -93,16 +108,45 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	ui.Divider()
 	ui.Success("Site created successfully!")
 	
-	// Navigation instructions
+	// Navigation instructions with framework-specific guidance
 	if siteName != "" {
-		ui.Info(fmt.Sprintf("Next steps:"))
+		ui.Info("Next steps:")
 		ui.Info(fmt.Sprintf("  cd %s", siteName))
-		ui.Info(fmt.Sprintf("  scribe serve"))
-		ui.Info(fmt.Sprintf("Then view your site at http://localhost:8080"))
+		
+		if useTailwind {
+			ui.Info("  npm install")
+			ui.Info("  npm run dev")
+			ui.Info("  # In another terminal:")
+			ui.Info("  scribe serve")
+		} else {
+			ui.Info("  scribe serve")
+		}
+		
+		ui.Info("Then view your site at http://localhost:8080")
 	} else {
-		ui.Info(fmt.Sprintf("Next steps:"))
-		ui.Info(fmt.Sprintf("  scribe serve"))
-		ui.Info(fmt.Sprintf("Then view your site at http://localhost:8080"))
+		ui.Info("Next steps:")
+		
+		if useTailwind {
+			ui.Info("  npm install")
+			ui.Info("  npm run dev")
+			ui.Info("  # In another terminal:")
+			ui.Info("  scribe serve")
+		} else {
+			ui.Info("  scribe serve")
+		}
+		
+		ui.Info("Then view your site at http://localhost:8080")
+	}
+	
+	// Show additional Tailwind-specific instructions
+	if useTailwind {
+		ui.Divider()
+		ui.Info("Tailwind CSS Setup:")
+		ui.Info("1. Node.js is required to use Tailwind CSS")
+		ui.Info("2. Run 'npm install' to install Tailwind CSS dependencies")
+		ui.Info("3. Run 'npm run dev' to start the Tailwind CSS compiler")
+		ui.Info("4. In a separate terminal, run 'scribe serve' to start the development server")
+		ui.Info("5. For more detailed instructions, see the README.md file")
 	}
 	
 	return nil

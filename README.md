@@ -95,10 +95,14 @@ mysite/
 │   └── *.md           # Regular pages
 ├── layouts/           # Custom template layouts (optional)
 ├── static/            # Static files (copied as-is)
-└── themes/            # Site themes
-    └── default/       # Default theme
-        ├── layouts/   # Theme layouts
-        └── static/    # Theme static files
+├── themes/            # Site themes
+│   └── default/       # Default theme
+│       ├── layouts/   # Theme layouts
+│       └── static/    # Theme static files
+├── src/               # Source files (only with Tailwind CSS)
+│   └── input.css      # Tailwind CSS input file
+├── tailwind.config.js # Tailwind CSS config (only with Tailwind CSS)
+└── package.json       # Node.js package file (only with Tailwind CSS)
 ```
 
 ## Content Format
@@ -169,6 +173,34 @@ Template data includes:
 - `.Pages` - List of pages (for list/home templates)
 
 ## Customization
+
+### CSS Frameworks
+
+When creating a new site, Scribe offers two CSS framework options:
+
+#### Default CSS
+
+A simple, lightweight CSS framework with no external dependencies.
+
+#### Tailwind CSS
+
+A utility-first CSS framework that allows for rapid UI development. When choosing Tailwind CSS:
+
+1. Node.js is required to use Tailwind CSS
+2. The site will include a basic Tailwind CSS configuration
+3. To start development:
+   ```bash
+   # Install dependencies
+   npm install
+   
+   # Start Tailwind CLI in watch mode
+   npm run dev
+   
+   # In a separate terminal
+   scribe serve
+   ```
+4. Tailwind CSS styles will be compiled from `src/input.css` to `static/css/style.css`
+5. For production, run `npm run build` to create an optimized CSS file
 
 ### Custom Themes
 

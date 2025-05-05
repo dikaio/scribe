@@ -240,8 +240,8 @@ func TestSampleContentAndTemplates(t *testing.T) {
 		t.Fatalf("Failed to create themes directory: %v", err)
 	}
 
-	// Test createDefaultTemplates
-	err = app.createDefaultTemplates(tempDir)
+	// Test createDefaultTemplates with default styling (no Tailwind)
+	err = app.createDefaultTemplates(tempDir, false)
 	if err != nil {
 		t.Fatalf("Failed to create default templates: %v", err)
 	}
