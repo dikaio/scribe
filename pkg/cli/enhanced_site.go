@@ -34,10 +34,10 @@ func (a *App) createSiteEnhanced(initialName string) error {
 
 	// Prompt for CSS framework
 	cssOptions := []ui.Option{
-		{Label: "Default CSS (Simple, no dependencies)", Value: "default"},
-		{Label: "Tailwind CSS (Utility-first CSS framework)", Value: "tailwind"},
+		{Label: "Default CSS", Value: "default"},
+		{Label: "Tailwind CSS", Value: "tailwind"},
 	}
-	cssChoice := ui.SelectOption("CSS Framework", "Choose a CSS framework for your site", cssOptions, 0)
+	cssChoice := ui.SelectOption("Select Theme", "Choose a theme for your site", cssOptions, 0)
 	useTailwind := cssChoice == "tailwind"
 
 	// Display banner
@@ -108,45 +108,56 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	ui.Divider()
 	ui.Success("Site created successfully!")
 	
-	// Navigation instructions with framework-specific guidance
+	// Automatically change directory if site name is not empty
+	// This will affect the current process but not the parent shell
+	// (which is why we need to show instructions to the user)
 	if siteName != "" {
-		ui.Info("Next steps:")
-		ui.Info(fmt.Sprintf("  cd %s", siteName))
-		
-		if useTailwind {
-			ui.Info("  npm install")
-			ui.Info("  npm run dev")
-			ui.Info("  # In another terminal:")
-			ui.Info("  scribe serve")
-		} else {
-			ui.Info("  scribe serve")
-		}
-		
-		ui.Info("Then view your site at http://localhost:8080")
-	} else {
-		ui.Info("Next steps:")
-		
-		if useTailwind {
-			ui.Info("  npm install")
-			ui.Info("  npm run dev")
-			ui.Info("  # In another terminal:")
-			ui.Info("  scribe serve")
-		} else {
-			ui.Info("  scribe serve")
-		}
-		
-		ui.Info("Then view your site at http://localhost:8080")
+		os.Chdir(sitePath)
 	}
+	
+	// Automatically run npm install if using Tailwind
+	if useTailwind {
+		ui.Info("Installing Tailwind CSS dependencies...")
+		
+		// Run npm install
+		npmCmd := exec.Command("npm", "install")
+		npmCmd.Stdout = os.Stdout
+		npmCmd.Stderr = os.Stderr
+		
+		err := npmCmd.Run()
+		if err != nil {
+			ui.Warning(fmt.Sprintf("Failed to install dependencies: %v", err))
+			ui.Info("Please run 'npm install' manually to complete setup.")
+		} else {
+			ui.Success("Dependencies installed successfully!")
+		}
+	}
+	
+	// Navigation instructions with framework-specific guidance
+	ui.Info("Next steps:")
+	
+	if siteName != "" {
+		ui.Info(fmt.Sprintf("  cd %s  (if not already in that directory)", siteName))
+	}
+	
+	if useTailwind {
+		ui.Info("  scribe run     (run both Tailwind compiler and development server)")
+		ui.Info("  - OR -")
+		ui.Info("  npm run dev    (in one terminal)")
+		ui.Info("  scribe serve   (in another terminal)")
+	} else {
+		ui.Info("  scribe serve   (start development server)")
+	}
+	
+	ui.Info("Then view your site at http://localhost:8080")
 	
 	// Show additional Tailwind-specific instructions
 	if useTailwind {
 		ui.Divider()
 		ui.Info("Tailwind CSS Setup:")
 		ui.Info("1. Node.js is required to use Tailwind CSS")
-		ui.Info("2. Run 'npm install' to install Tailwind CSS dependencies")
-		ui.Info("3. Run 'npm run dev' to start the Tailwind CSS compiler")
-		ui.Info("4. In a separate terminal, run 'scribe serve' to start the development server")
-		ui.Info("5. For more detailed instructions, see the README.md file")
+		ui.Info("2. Run 'scribe run' to start both the Tailwind compiler and development server")
+		ui.Info("3. For more detailed instructions, see the README.md file")
 	}
 	
 	return nil

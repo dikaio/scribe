@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/dikaio/scribe/internal/build"
 	"github.com/dikaio/scribe/internal/config"
@@ -68,6 +70,12 @@ func (a *App) registerCommands() {
 		Action:      a.cmdServe,
 	}
 
+	// Run command (serve + Tailwind watch)
+	a.Commands["run"] = Command{
+		Name:        "run",
+		Description: "Run development server and file watchers concurrently",
+		Action:      a.cmdRun,
+	}
 
 	// New site command
 	a.Commands["new"] = Command{
@@ -124,6 +132,7 @@ func (a *App) showHelp() {
 	fmt.Printf("  %s new                  Create a new site in the current directory with interactive prompts\n", a.Name)
 	fmt.Printf("  %s new my-site          Create a new site in 'my-site' directory with interactive prompts\n", a.Name)
 	fmt.Printf("  %s serve                Start development server for the current directory\n", a.Name)
+	fmt.Printf("  %s run                  Run development server and file watchers (for Tailwind CSS sites)\n", a.Name)
 	fmt.Printf("  %s build                Build the site in the current directory\n", a.Name)
 
 	fmt.Println("\nUse 'scribe help [command]' for more information about a command.")
@@ -185,6 +194,77 @@ func (a *App) cmdServe(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Initialize the server (default port: 8080)
+	port := 8080
+	server := server.NewServer(cfg, port, true) // true = quiet mode
+
+	// Start the server
+	err = server.Start(sitePath)
+	if err != nil {
+		return fmt.Errorf("server failed: %w", err)
+	}
+
+	return nil
+}
+
+// cmdRun implements the run command, which starts both the Tailwind CSS watcher and the development server.
+// It automatically detects if the site uses Tailwind CSS.
+func (a *App) cmdRun(args []string) error {
+	// Get site path and config
+	sitePath, cfg, err := a.getSitePathAndConfig(args, "")
+	if err != nil {
+		return err
+	}
+
+	// Check if the site uses Tailwind CSS by looking for tailwind.config.js
+	tailwindConfigPath := filepath.Join(sitePath, "tailwind.config.js")
+	useTailwind := false
+	
+	if _, err := os.Stat(tailwindConfigPath); err == nil {
+		useTailwind = true
+	}
+
+	if !useTailwind {
+		// If no Tailwind CSS is used, just start the server
+		ui.Info("No Tailwind CSS configuration detected. Starting development server only.")
+		return a.cmdServe(args)
+	}
+
+	// Verify npm is installed
+	npmCmd := exec.Command("npm", "--version")
+	npmErr := npmCmd.Run()
+	if npmErr != nil {
+		return fmt.Errorf("npm not found. Please install Node.js and npm to use the run command with Tailwind CSS: %w", npmErr)
+	}
+
+	// Start Tailwind CSS watcher in the background
+	ui.Info("Starting Tailwind CSS watcher and development server...")
+	
+	// Create a channel to catch signals
+	done := make(chan struct{})
+
+	// Start Tailwind CSS watcher in a goroutine
+	go func() {
+		defer close(done)
+		
+		tailwindCmd := exec.Command("npm", "run", "dev")
+		tailwindCmd.Stdout = os.Stdout
+		tailwindCmd.Stderr = os.Stderr
+		tailwindCmd.Dir = sitePath
+		
+		err := tailwindCmd.Start()
+		if err != nil {
+			ui.Error(fmt.Sprintf("Failed to start Tailwind CSS watcher: %v", err))
+			return
+		}
+		
+		// Wait for the process to finish (which won't happen unless there's an error)
+		tailwindCmd.Wait()
+	}()
+
+	// Give Tailwind a moment to start
+	time.Sleep(1 * time.Second)
 
 	// Initialize the server (default port: 8080)
 	port := 8080

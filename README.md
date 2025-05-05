@@ -147,14 +147,15 @@ Site configuration is stored in `config.jsonc`:
 
 ## Commands
 
-| Command                   | Description                                 |
-| ------------------------- | ------------------------------------------- |
-| `scribe build [path]`     | Build the site                              |
-| `scribe serve [path]`     | Start a development server with live reload |
-| `scribe new [name]`       | Create a new site interactively             |
-| `scribe new post [title]` | Create a new blog post                      |
-| `scribe new page [title]` | Create a new page                           |
-| `scribe help`             | Show help information                       |
+| Command                   | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `scribe build [path]`     | Build the site                                   |
+| `scribe serve [path]`     | Start a development server with live reload      |
+| `scribe run [path]`       | Run development server and file watchers         |
+| `scribe new [name]`       | Create a new site interactively                  |
+| `scribe new post [title]` | Create a new blog post                           |
+| `scribe new page [title]` | Create a new page                                |
+| `scribe help`             | Show help information                            |
 
 ## Templating
 
@@ -188,19 +189,18 @@ A utility-first CSS framework that allows for rapid UI development. When choosin
 
 1. Node.js is required to use Tailwind CSS
 2. The site will include a basic Tailwind CSS configuration
-3. To start development:
+3. Dependencies will be automatically installed during site creation
+4. To start development:
    ```bash
-   # Install dependencies
-   npm install
+   # Run both Tailwind watcher and development server
+   scribe run
    
-   # Start Tailwind CLI in watch mode
-   npm run dev
-   
-   # In a separate terminal
-   scribe serve
+   # Or run each process separately
+   npm run dev     # In terminal 1
+   scribe serve    # In terminal 2
    ```
-4. Tailwind CSS styles will be compiled from `src/input.css` to `static/css/style.css`
-5. For production, run `npm run build` to create an optimized CSS file
+5. Tailwind CSS styles will be compiled from `src/input.css` to `static/css/style.css`
+6. For production, run `npm run build` to create an optimized CSS file
 
 ### Custom Themes
 
