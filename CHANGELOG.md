@@ -1,3 +1,11 @@
+## v0.4.11 (2025-05-05)
+
+### Features
+
+- feat: enhance user experience
+- feat: add Tailwind CSS support
+
+
 ## v0.4.10 (2025-05-05)
 
 ### Other Changes
