@@ -11,6 +11,7 @@
 
 - fix: improve error handling with early returns
 - fix: make task commands handle multiple directory scenarios
+- fix: add missing template functions to tests
 
 ### Other Changes
 
