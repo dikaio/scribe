@@ -14,6 +14,18 @@ func TestDefaultTemplates(t *testing.T) {
 		"formatDate": func(date interface{}) string {
 			return "2025-01-01" // Mock date for testing
 		},
+		"now": func() interface{} {
+			return struct {
+				Format func(string) string
+			}{
+				Format: func(string) string {
+					return "2025"
+				},
+			}
+		},
+		"sub": func(a, b int) int {
+			return a - b 
+		},
 	})
 	
 	// Add BaseTemplate
