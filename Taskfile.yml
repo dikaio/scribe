@@ -15,6 +15,24 @@ tasks:
     desc: Run the application
     cmds:
       - go run ./cmd/scribe
+  
+  new:
+    desc: Create a new site
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - go run {{.TASKFILE_DIR}}/cmd/scribe new {{.CLI_ARGS}}
+    
+  serve:
+    desc: Serve a site for development
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - go run {{.TASKFILE_DIR}}/cmd/scribe serve {{.CLI_ARGS}}
+      
+  dev:
+    desc: Run development server and watchers
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - go run {{.TASKFILE_DIR}}/cmd/scribe run {{.CLI_ARGS}}
 
   test:
     desc: Run all tests
