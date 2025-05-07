@@ -1,3 +1,10 @@
+## v0.4.15 (2025-05-07)
+
+### Bug Fixes
+
+- fix: improve template caching test reliability
+- fix: resolve intermittent test failures in CI
+
 ## v0.4.14 (2025-05-07)
 
 ### Features
