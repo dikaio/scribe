@@ -68,11 +68,20 @@ Open your browser at [http://localhost:8080](http://localhost:8080) to see your 
 ### Create content
 
 ```bash
-# Create a new post
+# Create a new post (in content/posts/)
 scribe new post "My First Post"
 
-# Create a new page
+# Create a new page (in content/)
 scribe new page "About Me"
+
+# Create content at a specific path (directory is created automatically)
+scribe new content articles/tech/golang.md "Go Programming Guide"
+
+# Create content in a custom directory
+scribe new page articles/tutorials "Getting Started with Scribe"
+
+# Path-first syntax (useful for scripts)
+scribe new post docs/guides/deployment.md "Deployment Guide"
 ```
 
 ### Build your site
@@ -220,7 +229,9 @@ To override a theme's templates:
 1. Create a file with the same name in your site's `layouts/` directory
 2. Scribe will use your custom template instead of the theme's
 
-### File-Based Routing
+### File-Based Routing and Content Creation
+
+### Content Structure
 
 Scribe uses a file-based routing system similar to Next.js or Astro. URLs are derived directly from the content directory structure:
 
@@ -232,6 +243,39 @@ Scribe uses a file-based routing system similar to Next.js or Astro. URLs are de
   - Example: `content/posts/welcome.md` → `/posts/welcome/`
 
 This intuitive system makes it easy to organize your content in logical sections while maintaining clean URLs. You can create any directory structure you need, and Scribe will automatically generate the corresponding URLs.
+
+### Flexible Content Creation
+
+The CLI provides flexible ways to create content anywhere in your site structure:
+
+1. **Traditional Commands**:
+   ```bash
+   scribe new post "My First Post"  # Creates content/posts/my-first-post.md
+   scribe new page "About"          # Creates content/about.md
+   ```
+
+2. **Path-Based Creation**:
+   ```bash
+   # Create content in a specific directory
+   scribe new post articles/golang "Go Tutorial"
+   
+   # Create content with specific filename
+   scribe new page tutorials/getting-started.md "Getting Started Guide"
+   ```
+
+3. **Generic Content Command**:
+   ```bash
+   # For any content type and location
+   scribe new content services/api/rest.md "REST API Documentation"
+   ```
+
+4. **Path-First Syntax** (useful in scripts):
+   ```bash
+   # If the second argument contains a path (/ or .md), it's treated as the path
+   scribe new post docs/guides/deployment.md "Deployment Guide"
+   ```
+
+Directories are automatically created if they don't exist, making it easy to organize your content however you prefer.
 
 ## Performance
 

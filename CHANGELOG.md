@@ -1,3 +1,16 @@
+## v0.4.16 (2025-05-07)
+
+### Features
+
+- feat: add flexible content creation with custom paths
+- feat: add new generic content creation command
+- feat: improve CLI with path-first syntax for content creation
+
+### Other Changes
+
+- refactor: update content creator to support file-based routing
+- docs: enhance documentation for file-based routing and content creation
+
 ## v0.4.15 (2025-05-07)
 
 ### Bug Fixes

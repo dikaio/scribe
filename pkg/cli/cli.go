@@ -19,7 +19,7 @@ import (
 // Version information set by build flags
 var (
 	// Version is the semantic version of the application
-	Version = "v0.4.15"
+	Version = "v0.4.16"
 	// Commit is the git commit SHA at build time
 	Commit = "none" 
 	// Date is the build date
@@ -297,27 +297,85 @@ func (a *App) cmdNew(args []string) error {
 		return a.createNewSite("")
 	}
 
-	// If first arg starts with a letter and not "site", "post", or "page", 
+	// If first arg starts with a letter and not "site", "post", "page", or "content", 
 	// treat it as a site name
 	firstArg := args[0]
-	if firstArg != "site" && firstArg != "post" && firstArg != "page" {
+	if firstArg != "site" && firstArg != "post" && firstArg != "page" && firstArg != "content" {
 		return a.createNewSite(firstArg)
 	}
 
-	// Otherwise, handle the classic way
+	// Handle all resource types
 	resType := firstArg
-	name := ""
-	if len(args) > 1 {
-		name = args[1]
-	}
-
+	
 	switch resType {
 	case "site":
+		// For sites, the second arg is the site name
+		name := ""
+		if len(args) > 1 {
+			name = args[1]
+		}
 		return a.createNewSite(name)
+		
 	case "post":
-		return a.createNewPost(name)
+		// For posts, second arg can be either a title or path
+		var title, path string
+		if len(args) > 1 {
+			// If the argument has a path-like format (contains / or .md), 
+			// treat it as a path, otherwise as a title
+			if strings.Contains(args[1], "/") || strings.HasSuffix(args[1], ".md") {
+				path = args[1]
+				// If there's a third argument, it's the title
+				if len(args) > 2 {
+					title = args[2]
+				}
+			} else {
+				title = args[1]
+				// If there's a third argument, it's a path
+				if len(args) > 2 {
+					path = args[2]
+				}
+			}
+		}
+		return a.createNewPost(title, path)
+		
 	case "page":
-		return a.createNewPage(name)
+		// For pages, second arg can be either a title or path
+		var title, path string
+		if len(args) > 1 {
+			// If the argument has a path-like format (contains / or .md), 
+			// treat it as a path, otherwise as a title
+			if strings.Contains(args[1], "/") || strings.HasSuffix(args[1], ".md") {
+				path = args[1]
+				// If there's a third argument, it's the title
+				if len(args) > 2 {
+					title = args[2]
+				}
+			} else {
+				title = args[1]
+				// If there's a third argument, it's a path
+				if len(args) > 2 {
+					path = args[2]
+				}
+			}
+		}
+		return a.createNewPage(title, path)
+		
+	case "content":
+		// Generic content creation with required path argument
+		if len(args) < 2 {
+			return fmt.Errorf("content command requires a path argument")
+		}
+		
+		path := args[1]
+		title := ""
+		
+		// If there's a third argument, it's the title
+		if len(args) > 2 {
+			title = args[2]
+		}
+		
+		return a.createNewContent(path, title)
+	
 	default:
 		return fmt.Errorf("unknown resource type: %s", resType)
 	}
@@ -330,7 +388,7 @@ func (a *App) createNewSite(name string) error {
 }
 
 // createNewPost creates a new blog post
-func (a *App) createNewPost(initialTitle string) error {
+func (a *App) createNewPost(initialTitle string, customPath string) error {
 	ui.Header("Create New Post")
 
 	// Prompt for post title
@@ -353,7 +411,7 @@ func (a *App) createNewPost(initialTitle string) error {
 	creator := content.NewCreator(".")
 
 	// Create post
-	filePath, err := creator.CreateContent(content.PostType, title, description, tags, draft)
+	filePath, err := creator.CreateContent(content.PostType, title, description, tags, draft, customPath)
 	if err != nil {
 		return fmt.Errorf("failed to create post: %w", err)
 	}
@@ -363,7 +421,7 @@ func (a *App) createNewPost(initialTitle string) error {
 }
 
 // createNewPage creates a new static page
-func (a *App) createNewPage(initialTitle string) error {
+func (a *App) createNewPage(initialTitle string, customPath string) error {
 	ui.Header("Create New Page")
 
 	// Prompt for page title
@@ -382,12 +440,58 @@ func (a *App) createNewPage(initialTitle string) error {
 	creator := content.NewCreator(".")
 
 	// Create page
-	filePath, err := creator.CreateContent(content.PageType, title, description, nil, draft)
+	filePath, err := creator.CreateContent(content.PageType, title, description, nil, draft, customPath)
 	if err != nil {
 		return fmt.Errorf("failed to create page: %w", err)
 	}
 
 	ui.Success(fmt.Sprintf("Page created successfully: %s", filePath))
+	return nil
+}
+
+// createNewContent creates generic content at a specific path
+func (a *App) createNewContent(customPath string, initialTitle string) error {
+	ui.Header("Create New Content")
+	
+	// Determine if we should use post or page format
+	contentType := content.PageType
+	if strings.Contains(customPath, "posts/") || strings.HasPrefix(customPath, "posts") {
+		contentType = content.PostType
+	}
+
+	// Prompt for title
+	title := initialTitle
+	if title == "" {
+		if contentType == content.PostType {
+			title = ui.PromptWithValidation("Post Title", "", ui.Required("Post title"))
+		} else {
+			title = ui.PromptWithValidation("Content Title", "", ui.Required("Content title"))
+		}
+	}
+
+	// Prompt for description (optional)
+	description := ui.Prompt("Description (optional)", "")
+
+	// Prompt for tags if it's a post
+	var tags []string
+	if contentType == content.PostType {
+		defaultTags := []string{"uncategorized"}
+		tags = ui.PromptTags("Tags (comma-separated)", defaultTags)
+	}
+
+	// Prompt for draft status
+	draft := ui.ConfirmYesNo("Save as draft?", false)
+
+	// Create content creator
+	creator := content.NewCreator(".")
+
+	// Create content
+	filePath, err := creator.CreateContent(contentType, title, description, tags, draft, customPath)
+	if err != nil {
+		return fmt.Errorf("failed to create content: %w", err)
+	}
+
+	ui.Success(fmt.Sprintf("Content created successfully: %s", filePath))
 	return nil
 }
 

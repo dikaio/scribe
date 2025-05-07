@@ -31,7 +31,7 @@ func NewCreator(sitePath string) *Creator {
 }
 
 // CreateContent creates a new content file
-func (c *Creator) CreateContent(contentType ContentType, title, description string, tags []string, draft bool) (string, error) {
+func (c *Creator) CreateContent(contentType ContentType, title, description string, tags []string, draft bool, customPath string) (string, error) {
 	// Generate slug from title
 	slug := generateSlug(title)
 	if slug == "" {
@@ -50,7 +50,36 @@ func (c *Creator) CreateContent(contentType ContentType, title, description stri
 
 	// Determine content directory and file path
 	var contentDir, filePath string
-	if contentType == PostType {
+	
+	if customPath != "" {
+		// Check if the custom path is absolute or relative
+		if !filepath.IsAbs(customPath) {
+			// If it's a relative path, make it relative to content/
+			contentDir = filepath.Join(c.sitePath, "content", filepath.Dir(customPath))
+			
+			// If the path contains a filename with extension, use it; otherwise, use the slug
+			baseName := filepath.Base(customPath)
+			if strings.HasSuffix(baseName, ".md") {
+				filePath = filepath.Join(contentDir, baseName)
+			} else if baseName != "." {
+				// If it's a directory path without a filename, use the slug
+				contentDir = filepath.Join(c.sitePath, "content", customPath)
+				filePath = filepath.Join(contentDir, slug+".md")
+			} else {
+				filePath = filepath.Join(contentDir, slug+".md")
+			}
+		} else {
+			// Absolute path is used as-is
+			contentDir = filepath.Dir(customPath)
+			filePath = customPath
+			
+			// If the path doesn't have a markdown extension, add it
+			if !strings.HasSuffix(filePath, ".md") {
+				filePath += ".md"
+			}
+		}
+	} else if contentType == PostType {
+		// Default behavior if no custom path is provided
 		contentDir = filepath.Join(c.sitePath, "content", "posts")
 		filePath = filepath.Join(contentDir, slug+".md")
 	} else {

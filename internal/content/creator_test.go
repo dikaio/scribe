@@ -24,6 +24,8 @@ func TestCreateContent(t *testing.T) {
 		description string
 		tags        []string
 		draft       bool
+		customPath  string
+		expectedDir string // Relative to content directory
 		wantErr     bool
 	}{
 		{
@@ -33,6 +35,8 @@ func TestCreateContent(t *testing.T) {
 			description: "A test post",
 			tags:        []string{"test", "example"},
 			draft:       false,
+			customPath:  "",
+			expectedDir: "posts",
 			wantErr:     false,
 		},
 		{
@@ -42,6 +46,30 @@ func TestCreateContent(t *testing.T) {
 			description: "A test page",
 			tags:        nil,
 			draft:       true,
+			customPath:  "",
+			expectedDir: "", // Root content directory
+			wantErr:     false,
+		},
+		{
+			name:        "Create content in custom directory",
+			contentType: PageType,
+			title:       "Custom Dir",
+			description: "In a custom directory",
+			tags:        nil,
+			draft:       false,
+			customPath:  "articles/tech",
+			expectedDir: "articles/tech",
+			wantErr:     false,
+		},
+		{
+			name:        "Create content with custom path and filename",
+			contentType: PageType,
+			title:       "Custom Path",
+			description: "With custom filename",
+			tags:        nil,
+			draft:       false,
+			customPath:  "docs/guides/getting-started.md",
+			expectedDir: "docs/guides",
 			wantErr:     false,
 		},
 		{
@@ -51,6 +79,8 @@ func TestCreateContent(t *testing.T) {
 			description: "Should fail",
 			tags:        nil,
 			draft:       false,
+			customPath:  "",
+			expectedDir: "",
 			wantErr:     true,
 		},
 	}
@@ -58,7 +88,7 @@ func TestCreateContent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create content
-			filePath, err := creator.CreateContent(tt.contentType, tt.title, tt.description, tt.tags, tt.draft)
+			filePath, err := creator.CreateContent(tt.contentType, tt.title, tt.description, tt.tags, tt.draft, tt.customPath)
 
 			// Check error expectations
 			if (err != nil) != tt.wantErr {
@@ -74,6 +104,30 @@ func TestCreateContent(t *testing.T) {
 			// Verify file exists
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				t.Errorf("CreateContent() file was not created at %s", filePath)
+			}
+			
+			// Verify the file is in the expected directory
+			expectedBasePath := "content"
+			if tt.expectedDir != "" {
+				expectedBasePath = "content/" + tt.expectedDir
+			}
+			
+			if !strings.Contains(filePath, expectedBasePath) {
+				t.Errorf("File created in wrong directory, expected path containing '%s', got '%s'", expectedBasePath, filePath)
+			}
+			
+			// For custom paths with a specific filename
+			if strings.HasSuffix(tt.customPath, ".md") {
+				expectedFilename := tt.customPath
+				if !strings.HasSuffix(filePath, expectedFilename) {
+					t.Errorf("File created with wrong filename, expected path ending with '%s', got '%s'", expectedFilename, filePath)
+				}
+			} else if tt.customPath == "" || !strings.HasSuffix(tt.customPath, "/") {
+				// For default paths or directory paths without a specific filename
+				expectedFilename := generateSlug(tt.title) + ".md"
+				if !strings.HasSuffix(filePath, expectedFilename) {
+					t.Errorf("File created with wrong filename, expected path ending with '%s', got '%s'", expectedFilename, filePath)
+				}
 			}
 
 			// Read file content
