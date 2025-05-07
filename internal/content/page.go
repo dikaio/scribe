@@ -24,7 +24,35 @@ type Page struct {
 	IsPost      bool
 }
 
-// LoadPage loads a page from a file
+// extractContentPath extracts the URL path from the file path
+// It preserves directory structure within the content directory
+func extractContentPath(filePath string, slug string) string {
+	// Find the "content" directory in the path
+	contentIdx := strings.Index(filePath, "/content/")
+	if contentIdx < 0 {
+		// Fallback: if "content" not found, just use the slug
+		return slug
+	}
+
+	// Get the path after "content/"
+	relativePath := filePath[contentIdx+9:] // +9 for "/content/"
+	
+	// Replace the file name with the slug
+	dir := filepath.Dir(relativePath)
+	if dir == "." {
+		// File is directly in content directory
+		return slug
+	}
+	
+	// Special case for posts directory to maintain backward compatibility
+	if strings.HasPrefix(dir, "posts") && filepath.Dir(dir) == "." {
+		return filepath.Join("posts", slug)
+	}
+	
+	// Join directory with slug for the final URL
+	return filepath.Join(dir, slug)
+}
+
 func LoadPage(filePath string, baseURL string) (Page, error) {
 	var page Page
 
@@ -54,11 +82,8 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 		slug = strings.TrimSuffix(baseName, extName)
 	}
 
-	// Determine URL and permalink
-	url := slug
-	if isPost {
-		url = filepath.Join("posts", slug)
-	}
+	// Determine URL from the file path, preserving directory structure
+	url := extractContentPath(filePath, slug)
 
 	permalink := filepath.Join(baseURL, url)
 

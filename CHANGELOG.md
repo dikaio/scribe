@@ -1,3 +1,14 @@
+## v0.4.14 (2025-05-07)
+
+### Features
+
+- feat: add full file-based routing support for content directories
+- feat: improve URL generation from file paths
+
+### Bug Fixes
+
+- fix: resolve issue with custom content directories not being rendered correctly
+
 ## v0.4.13 (2025-05-07)
 
 ### Bug Fixes

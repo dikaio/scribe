@@ -91,7 +91,9 @@ The built site will be in the `public` directory by default.
 mysite/
 ├── config.jsonc       # Site configuration
 ├── content/           # Content files (Markdown)
-│   ├── posts/         # Blog posts
+│   ├── posts/         # Blog posts (displayed in blog index)
+│   ├── articles/      # Example custom content section
+│   │   └── tech/      # Nested directories supported
 │   └── *.md           # Regular pages
 ├── layouts/           # Custom template layouts (optional)
 ├── static/            # Static files (copied as-is)
@@ -218,7 +220,20 @@ To override a theme's templates:
 1. Create a file with the same name in your site's `layouts/` directory
 2. Scribe will use your custom template instead of the theme's
 
-### Performance
+### File-Based Routing
+
+Scribe uses a file-based routing system similar to Next.js or Astro. URLs are derived directly from the content directory structure:
+
+- Files at the root of the `content` directory become pages at the site root
+  - Example: `content/about.md` → `/about/`
+- Files in subdirectories maintain their directory structure in URLs
+  - Example: `content/articles/tech/golang.md` → `/articles/tech/golang/`
+- The special `posts` directory is used for blog posts and will be included in the homepage listing
+  - Example: `content/posts/welcome.md` → `/posts/welcome/`
+
+This intuitive system makes it easy to organize your content in logical sections while maintaining clean URLs. You can create any directory structure you need, and Scribe will automatically generate the corresponding URLs.
+
+## Performance
 
 Based on our benchmarking:
 
