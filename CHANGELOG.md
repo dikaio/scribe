@@ -1,3 +1,10 @@
+## v0.4.17 (2025-05-07)
+
+### Bug Fixes
+
+- fix: add missing strings import in CLI file
+- fix: resolve build errors in goreleaser
+
 ## v0.4.16 (2025-05-07)
 
 ### Features

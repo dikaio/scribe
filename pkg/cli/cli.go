@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dikaio/scribe/internal/build"
@@ -19,7 +20,7 @@ import (
 // Version information set by build flags
 var (
 	// Version is the semantic version of the application
-	Version = "v0.4.16"
+	Version = "v0.4.17"
 	// Commit is the git commit SHA at build time
 	Commit = "none" 
 	// Date is the build date
