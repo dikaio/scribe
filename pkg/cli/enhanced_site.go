@@ -11,8 +11,8 @@ import (
 	"github.com/dikaio/scribe/internal/ui"
 )
 
-// createSiteEnhanced is a simplified version of createNewSite that just
-// asks for the site name and creates a default site with git initialization
+// createSiteEnhanced creates a new site with git initialization
+// and a streamlined setup process
 func (a *App) createSiteEnhanced(initialName string) error {
 	ui.Header("Scribe")
 
@@ -83,26 +83,9 @@ func (a *App) createSiteEnhanced(initialName string) error {
 		return fmt.Errorf("failed to create default templates: %w", err)
 	}
 	
-	// Initialize git repository automatically
-	ui.Info("Initializing git repository...")
-	gitCmd := exec.Command("git", "init", sitePath)
-	err := gitCmd.Run()
-	if err != nil {
-		ui.Warning(fmt.Sprintf("Failed to initialize git repository: %v", err))
-	} else {
-		// Create .gitignore with appropriate content
-		gitignorePath := filepath.Join(sitePath, ".gitignore")
-		gitignoreContent := "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
-		
-		// Add Node.js entries if using Tailwind
-		if useTailwind {
-			gitignoreContent = templates.TailwindGitignore
-		}
-		
-		if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
-			ui.Warning(fmt.Sprintf("Failed to create .gitignore file: %v", err))
-		}
-	}
+	// Create .gitignore and initialize git repository
+	a.createGitignore(sitePath, useTailwind)
+	a.initGitRepo(sitePath)
 
 	// Success message
 	ui.Divider()
@@ -117,23 +100,60 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	
 	// Automatically run npm install if using Tailwind
 	if useTailwind {
-		ui.Info("Installing Tailwind CSS dependencies...")
-		
-		// Run npm install
-		npmCmd := exec.Command("npm", "install")
-		npmCmd.Stdout = os.Stdout
-		npmCmd.Stderr = os.Stderr
-		
-		err := npmCmd.Run()
-		if err != nil {
-			ui.Warning(fmt.Sprintf("Failed to install dependencies: %v", err))
-			ui.Info("Please run 'npm install' manually to complete setup.")
-		} else {
-			ui.Success("Dependencies installed successfully!")
-		}
+		a.installNpmDependencies()
 	}
 	
-	// Navigation instructions with framework-specific guidance
+	// Show navigation instructions
+	a.showNextSteps(siteName, useTailwind)
+	
+	return nil
+}
+
+// createGitignore creates a .gitignore file appropriate for the site type
+func (a *App) createGitignore(sitePath string, useTailwind bool) {
+	gitignorePath := filepath.Join(sitePath, ".gitignore")
+	
+	// Select the appropriate content based on site type
+	var gitignoreContent string
+	if useTailwind {
+		gitignoreContent = templates.TailwindGitignore
+	} else {
+		gitignoreContent = "# Output directory\npublic/\n\n# IDE files\n.idea/\n.vscode/\n\n# System files\n.DS_Store\nThumbs.db\n"
+	}
+	
+	if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
+		ui.Warning(fmt.Sprintf("Failed to create .gitignore file: %v", err))
+	}
+}
+
+// initGitRepo initializes a git repository
+func (a *App) initGitRepo(sitePath string) {
+	ui.Info("Initializing git repository...")
+	gitCmd := exec.Command("git", "init", sitePath)
+	if err := gitCmd.Run(); err != nil {
+		ui.Warning(fmt.Sprintf("Failed to initialize git repository: %v", err))
+	}
+}
+
+// installNpmDependencies installs NPM dependencies for Tailwind
+func (a *App) installNpmDependencies() {
+	ui.Info("Installing Tailwind CSS dependencies...")
+	
+	// Run npm install
+	npmCmd := exec.Command("npm", "install")
+	npmCmd.Stdout = os.Stdout
+	npmCmd.Stderr = os.Stderr
+	
+	if err := npmCmd.Run(); err != nil {
+		ui.Warning(fmt.Sprintf("Failed to install dependencies: %v", err))
+		ui.Info("Please run 'npm install' manually to complete setup.")
+	} else {
+		ui.Success("Dependencies installed successfully!")
+	}
+}
+
+// showNextSteps shows guidance for getting started
+func (a *App) showNextSteps(siteName string, useTailwind bool) {
 	ui.Info("Next steps:")
 	
 	if siteName != "" {
@@ -159,6 +179,4 @@ func (a *App) createSiteEnhanced(initialName string) error {
 		ui.Info("2. Run 'scribe run' to start both the Tailwind compiler and development server")
 		ui.Info("3. For more detailed instructions, see the README.md file")
 	}
-	
-	return nil
 }

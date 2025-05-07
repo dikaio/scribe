@@ -21,18 +21,34 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - go run {{.TASKFILE_DIR}}/cmd/scribe new {{.CLI_ARGS}}
+      - echo "Site created! Now cd into your site directory and run 'task serve' to start the development server."
+      - echo "  cd {{.CLI_ARGS}} && task serve"
     
   serve:
     desc: Serve a site for development
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - go run {{.TASKFILE_DIR}}/cmd/scribe serve {{.CLI_ARGS}}
+      - |
+        if [ -f "config.jsonc" ] || [ -f "config.json" ]; then
+          go run {{.TASKFILE_DIR}}/cmd/scribe serve {{.CLI_ARGS}}
+        else
+          echo "Error: No config file found in the current directory."
+          echo "Make sure you're in a Scribe site directory or specify a path with: task serve -- path/to/site"
+          exit 1
+        fi
       
   dev:
     desc: Run development server and watchers
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - go run {{.TASKFILE_DIR}}/cmd/scribe run {{.CLI_ARGS}}
+      - |
+        if [ -f "config.jsonc" ] || [ -f "config.json" ]; then
+          go run {{.TASKFILE_DIR}}/cmd/scribe run {{.CLI_ARGS}}
+        else
+          echo "Error: No config file found in the current directory."
+          echo "Make sure you're in a Scribe site directory or specify a path with: task dev -- path/to/site"
+          exit 1
+        fi
 
   test:
     desc: Run all tests

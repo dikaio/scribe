@@ -1,0 +1,14 @@
+# Output directory
+public/
+
+# IDE files
+.idea/
+.vscode/
+
+# System files
+.DS_Store
+Thumbbs.db
+
+# Node.js
+node_modules/
+package-lock.json

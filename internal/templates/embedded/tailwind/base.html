@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .Title}}{{.Title}} | {{end}}{{.Site.Title}}</title>
+    <meta name="description" content="{{if .Description}}{{.Description}}{{else}}{{.Site.Description}}{{end}}">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-white text-gray-800 font-sans">
+    <header class="py-5 border-b border-gray-200 mb-10">
+        <div class="container mx-auto px-4 max-w-6xl flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/" class="text-2xl font-bold text-blue-600 no-underline">{{.Site.Title}}</a>
+            </div>
+            <nav class="flex items-center">
+                <ul class="flex space-x-8">
+                    <li><a href="/" class="text-gray-700 hover:text-blue-600 no-underline">Home</a></li>
+                    <li><a href="/about/" class="text-gray-700 hover:text-blue-600 no-underline">About</a></li>
+                </ul>
+                <a href="https://github.com/dikaio/scribe" class="ml-8 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-full no-underline">Try Scribe</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 max-w-4xl min-h-screen mb-16">
+        {{block "content" .}}{{end}}
+    </main>
+    <footer class="bg-gray-50 border-t border-gray-200 py-8 text-gray-600">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <div class="flex justify-between items-center">
+                <p>&copy; {{.Site.Title}} {{now.Format "2025"}}. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="/privacy/" class="text-gray-600 hover:text-blue-600 no-underline">Privacy</a>
+                    <a href="/terms/" class="text-gray-600 hover:text-blue-600 no-underline">Terms</a>
+                    <a href="/contact/" class="text-gray-600 hover:text-blue-600 no-underline">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

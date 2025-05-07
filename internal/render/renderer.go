@@ -40,6 +40,23 @@ func (r *Renderer) Init(sitePath string) error {
 	return r.templateManager.LoadTemplates(sitePath)
 }
 
+// createOutputFile creates output file and ensures directory exists
+func (r *Renderer) createOutputFile(outputPath string) (*os.File, error) {
+	// Create output directory if it doesn't exist
+	outputDir := filepath.Dir(outputPath)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return nil, err
+	}
+
+	// Create output file
+	f, err := os.Create(outputPath)
+	if err != nil {
+		return nil, err
+	}
+	
+	return f, nil
+}
+
 // RenderPage renders a page to an HTML file
 func (r *Renderer) RenderPage(page content.Page, outputPath string) error {
 	// Create layout name based on page's layout or default to "single"
@@ -62,14 +79,8 @@ func (r *Renderer) RenderPage(page content.Page, outputPath string) error {
 		}
 	}
 
-	// Create output directory if it doesn't exist
-	outputDir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
-	}
-
 	// Create output file
-	f, err := os.Create(outputPath)
+	f, err := r.createOutputFile(outputPath)
 	if err != nil {
 		return err
 	}
@@ -94,14 +105,8 @@ func (r *Renderer) RenderList(title string, pages []content.Page, outputPath str
 		return err
 	}
 
-	// Create output directory if it doesn't exist
-	outputDir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
-	}
-
 	// Create output file
-	f, err := os.Create(outputPath)
+	f, err := r.createOutputFile(outputPath)
 	if err != nil {
 		return err
 	}
@@ -131,7 +136,7 @@ func (r *Renderer) RenderHome(pages []content.Page, outputPath string) error {
 	}
 
 	// Create output file
-	f, err := os.Create(outputPath)
+	f, err := r.createOutputFile(outputPath)
 	if err != nil {
 		return err
 	}

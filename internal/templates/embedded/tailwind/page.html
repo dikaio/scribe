@@ -1,0 +1,13 @@
+{{define "content"}}
+<article>
+    <header>
+        <h1 class="text-4xl font-bold mb-6">{{.Page.Title}}</h1>
+    </header>
+    <div class="prose lg:prose-xl max-w-none prose-headings:font-bold prose-a:text-blue-600">
+        {{.Content}}
+    </div>
+    <div class="mt-12 pt-6 border-t border-gray-200">
+        <a href="/" class="text-blue-600 hover:underline font-medium">← Back to Home</a>
+    </div>
+</article>
+{{end}}

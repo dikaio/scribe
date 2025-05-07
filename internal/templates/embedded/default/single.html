@@ -1,0 +1,21 @@
+{{define "content"}}
+<article>
+    <header>
+        <h1>{{.Page.Title}}</h1>
+        <p class="meta">
+            <time>{{formatDate .Page.Date}}</time> • 2 min read
+            {{if .Page.Tags}}
+            <br>
+            <span class="tags">
+                {{range .Page.Tags}}
+                <span class="tag">{{.}}</span>
+                {{end}}
+            </span>
+            {{end}}
+        </p>
+    </header>
+    <div class="content">
+        {{.Content}}
+    </div>
+</article>
+{{end}}

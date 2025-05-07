@@ -39,6 +39,10 @@ func NewTemplateManager(cfg config.Config) *TemplateManager {
 		"lower": strings.ToLower,
 		"upper": strings.ToUpper,
 		"title": strings.Title,
+		"now": time.Now,
+		"sub": func(a, b int) int {
+			return a - b
+		},
 	}
 
 	return &TemplateManager{
@@ -80,7 +84,7 @@ func getFileModTime(files ...string) (time.Time, error) {
 
 // templateNeedsUpdate checks if any template files have been modified
 func (tm *TemplateManager) templateNeedsUpdate(name string, files []string) (bool, time.Time, error) {
-	// Always return true if caching is disabled
+	// Early return if caching is disabled
 	if !tm.cachingEnabled {
 		return true, time.Time{}, nil
 	}
@@ -89,15 +93,17 @@ func (tm *TemplateManager) templateNeedsUpdate(name string, files []string) (boo
 	cachedTemplate, exists := tm.cache[name]
 	tm.cacheMutex.RUnlock()
 
+	// Early return if template not in cache
 	if !exists {
 		return true, time.Time{}, nil
 	}
 
-	// Check if file list has changed
+	// Early return if file count has changed
 	if len(cachedTemplate.Files) != len(files) {
 		return true, time.Time{}, nil
 	}
 
+	// Early return if file paths have changed
 	for i, file := range files {
 		if cachedTemplate.Files[i] != file {
 			return true, time.Time{}, nil
@@ -136,38 +142,39 @@ func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 	// Add base template to each layout
 	layoutTemplates["base"] = []string{baseTemplatePath}
 	
-	// Collect theme templates
-	themeLayoutFiles, err := filepath.Glob(filepath.Join(themePath, "*.html"))
-	if err == nil {
-		for _, file := range themeLayoutFiles {
-			if file != baseTemplatePath {
+	// Helper function to collect and process template files
+	collectTemplates := func(path, basePath string, override bool) {
+		files, err := filepath.Glob(filepath.Join(path, "*.html"))
+		if err != nil {
+			return
+		}
+		
+		for _, file := range files {
+			if file != basePath {
 				name := filepath.Base(file)
 				name = strings.TrimSuffix(name, filepath.Ext(name))
+				
 				if _, exists := layoutTemplates[name]; !exists {
 					layoutTemplates[name] = []string{baseTemplatePath}
 				}
-				layoutTemplates[name] = append(layoutTemplates[name], file)
+				
+				if override {
+					// Site templates override theme templates
+					baseTemplate := layoutTemplates[name][0]
+					layoutTemplates[name] = []string{baseTemplate, file}
+				} else {
+					// Theme templates append
+					layoutTemplates[name] = append(layoutTemplates[name], file)
+				}
 			}
 		}
 	}
 	
+	// Collect theme templates
+	collectTemplates(themePath, baseTemplatePath, false)
+	
 	// Collect site templates (overrides)
-	siteLayoutFiles, err := filepath.Glob(filepath.Join(siteLayoutPath, "*.html"))
-	if err == nil {
-		for _, file := range siteLayoutFiles {
-			if file != baseTemplatePath {
-				name := filepath.Base(file)
-				name = strings.TrimSuffix(name, filepath.Ext(name))
-				if _, exists := layoutTemplates[name]; !exists {
-					layoutTemplates[name] = []string{baseTemplatePath}
-				}
-				// Site templates override theme templates, so we replace instead of append
-				// First keep the base template
-				baseTemplate := layoutTemplates[name][0]
-				layoutTemplates[name] = []string{baseTemplate, file}
-			}
-		}
-	}
+	collectTemplates(siteLayoutPath, baseTemplatePath, true)
 	
 	// Parse all template combinations, using cache where possible
 	for name, files := range layoutTemplates {

@@ -1,0 +1,13 @@
+{
+  "name": "scribe-tailwind-site",
+  "version": "1.0.0",
+  "description": "A site created with Scribe and Tailwind CSS",
+  "scripts": {
+    "dev": "npx tailwindcss -i ./src/input.css -o ./static/css/style.css --watch",
+    "build": "npx tailwindcss -i ./src/input.css -o ./static/css/style.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/cli": "^0.1.0"
+  }
+}

@@ -1,3 +1,23 @@
+## v0.4.12 (2025-05-07)
+
+### Features
+
+- feat: implement template editing with proper syntax highlighting
+- feat: optimize codebase with improved modularity and reduced size
+- feat: enhance template management with embedded file structure
+- feat: add developer documentation for template customization
+
+### Bug Fixes
+
+- fix: improve error handling with early returns
+- fix: make task commands handle multiple directory scenarios
+
+### Other Changes
+
+- refactor: extract helper functions for improved code organization
+- refactor: optimize template loading with better caching
+- refactor: streamline site creation process
+
 ## v0.4.11 (2025-05-05)
 
 ### Features
