@@ -147,15 +147,15 @@ Site configuration is stored in `config.jsonc`:
 
 ## Commands
 
-| Command                   | Description                                      |
-| ------------------------- | ------------------------------------------------ |
-| `scribe build [path]`     | Build the site                                   |
-| `scribe serve [path]`     | Start a development server with live reload      |
-| `scribe run [path]`       | Run development server and file watchers         |
-| `scribe new [name]`       | Create a new site interactively                  |
-| `scribe new post [title]` | Create a new blog post                           |
-| `scribe new page [title]` | Create a new page                                |
-| `scribe help`             | Show help information                            |
+| Command                   | Description                                 |
+| ------------------------- | ------------------------------------------- |
+| `scribe build [path]`     | Build the site                              |
+| `scribe serve [path]`     | Start a development server with live reload |
+| `scribe run [path]`       | Run development server and file watchers    |
+| `scribe new [name]`       | Create a new site interactively             |
+| `scribe new post [title]` | Create a new blog post                      |
+| `scribe new page [title]` | Create a new page                           |
+| `scribe help`             | Show help information                       |
 
 ## Templating
 
@@ -267,13 +267,13 @@ Optimizations we're actively working on:
 
 - [x] **Parallel Processing**: Loading and processing content in parallel with worker pools
 - [x] **Template Caching**: Pre-compile and cache templates for improved performance
-- [ ] Add more test coverage for all components
 - [ ] Implement plugin architecture
-- [ ] Build additional themes
-- [ ] Add support for advanced content features like series and custom taxonomies
-- [ ] Responsive Images
+- [ ] Responsive Images (similar to Next.js Image component)
 - [ ] Sitemap generation
 - [ ] SEO Optimizations
+- [ ] Add support for advanced content features like series and custom taxonomies
+- [ ] Add more test coverage for all components
+- [ ] Build additional themes
 - [ ] Performance Profiling and Monitoring
 
 ## Contributing
