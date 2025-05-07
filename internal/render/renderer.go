@@ -13,6 +13,7 @@ import (
 type Renderer struct {
 	templateManager *TemplateManager
 	config          config.Config
+	devMode         bool
 }
 
 // NewRenderer creates a new renderer
@@ -20,6 +21,17 @@ func NewRenderer(cfg config.Config) *Renderer {
 	return &Renderer{
 		templateManager: NewTemplateManager(cfg),
 		config:          cfg,
+		devMode:         false,
+	}
+}
+
+// SetDevMode enables or disables development mode (disables caching)
+func (r *Renderer) SetDevMode(enabled bool) {
+	r.devMode = enabled
+	if enabled {
+		r.templateManager.DisableCaching()
+	} else {
+		r.templateManager.EnableCaching()
 	}
 }
 

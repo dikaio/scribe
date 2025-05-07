@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/dikaio/scribe/internal/config"
 )
@@ -239,4 +240,312 @@ func TestLoadTemplatesNoBaseTemplate(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for missing base template, got nil")
 	}
+}
+
+func TestTemplateCaching(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir, err := os.MkdirTemp("", "template-cache-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create test directory structure
+	themeDir := filepath.Join(tempDir, "themes", "default", "layouts")
+	err = os.MkdirAll(themeDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create theme dir: %v", err)
+	}
+
+	// Create base template
+	baseContent := `<!DOCTYPE html><html><body>{{block "content" .}}{{end}}</body></html>`
+	baseTemplatePath := filepath.Join(themeDir, "base.html")
+	err = os.WriteFile(baseTemplatePath, []byte(baseContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write base template: %v", err)
+	}
+
+	// Create single template
+	singleContent := `{{define "content"}}<h1>Original Content</h1>{{end}}`
+	singleTemplatePath := filepath.Join(themeDir, "single.html")
+	err = os.WriteFile(singleTemplatePath, []byte(singleContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write single template: %v", err)
+	}
+
+	// Create config
+	cfg := config.Config{
+		Theme:     "default",
+		LayoutDir: "layouts",
+	}
+
+	// Test with caching enabled
+	t.Run("CachingEnabled", func(t *testing.T) {
+		// Create template manager with caching enabled
+		tm := NewTemplateManager(cfg)
+		tm.EnableCaching()
+
+		// Load templates first time
+		err = tm.LoadTemplates(tempDir)
+		if err != nil {
+			t.Fatalf("Failed to load templates: %v", err)
+		}
+
+		// Make sure the template was cached
+		if len(tm.cache) == 0 {
+			t.Error("Expected cache to contain templates, but it was empty")
+		}
+
+		// Get reference to the original template
+		originalTemplate, err := tm.GetTemplate("single")
+		if err != nil {
+			t.Fatalf("Failed to get template: %v", err)
+		}
+
+		// Simulate template not changing (reload with same files)
+		err = tm.LoadTemplates(tempDir)
+		if err != nil {
+			t.Fatalf("Failed to reload templates: %v", err)
+		}
+
+		// Get reference to the template again
+		unchangedTemplate, err := tm.GetTemplate("single")
+		if err != nil {
+			t.Fatalf("Failed to get template: %v", err)
+		}
+
+		// Verify the template was NOT reloaded
+		if originalTemplate != unchangedTemplate {
+			t.Error("Expected template to be reused from cache when file hasn't changed")
+		}
+
+		// Modify the template file
+		updatedContent := `{{define "content"}}<h1>Updated Content</h1>{{end}}`
+		err = os.WriteFile(singleTemplatePath, []byte(updatedContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update template file: %v", err)
+		}
+		
+		// Wait a moment to ensure filesystem has time to update
+		time.Sleep(10 * time.Millisecond)
+
+		// Reload templates
+		err = tm.LoadTemplates(tempDir)
+		if err != nil {
+			t.Fatalf("Failed to reload templates: %v", err)
+		}
+
+		// Get reference to the reloaded template
+		reloadedTemplate, err := tm.GetTemplate("single")
+		if err != nil {
+			t.Fatalf("Failed to get template: %v", err)
+		}
+
+		// Verify the template was updated in cache
+		if originalTemplate == reloadedTemplate {
+			t.Error("Expected template to be reloaded when file changes, but got same template reference")
+		}
+	})
+
+	// Test with caching disabled
+	t.Run("CachingDisabled", func(t *testing.T) {
+		// Create template manager with caching disabled
+		tm := NewTemplateManager(cfg)
+		tm.DisableCaching()
+
+		// Load templates first time
+		err = tm.LoadTemplates(tempDir)
+		if err != nil {
+			t.Fatalf("Failed to load templates: %v", err)
+		}
+
+		// Make sure the template cache is empty
+		if len(tm.cache) != 0 {
+			t.Error("Expected cache to be empty when caching is disabled")
+		}
+
+		// Get reference to the original template
+		originalTemplate, err := tm.GetTemplate("single")
+		if err != nil {
+			t.Fatalf("Failed to get template: %v", err)
+		}
+
+		// Reload templates
+		err = tm.LoadTemplates(tempDir)
+		if err != nil {
+			t.Fatalf("Failed to reload templates: %v", err)
+		}
+
+		// Get reference to the reloaded template
+		reloadedTemplate, err := tm.GetTemplate("single")
+		if err != nil {
+			t.Fatalf("Failed to get template: %v", err)
+		}
+
+		// Verify the template was reloaded even without changes
+		if originalTemplate == reloadedTemplate {
+			t.Error("Expected template to be reloaded when caching is disabled, but got same template reference")
+		}
+	})
+}
+
+func TestGetFileModTime(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir, err := os.MkdirTemp("", "modtime-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create test files with different timestamps
+	file1Path := filepath.Join(tempDir, "file1.txt")
+	file2Path := filepath.Join(tempDir, "file2.txt")
+	
+	// Create first file
+	err = os.WriteFile(file1Path, []byte("test"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write file1: %v", err)
+	}
+	
+	// Wait a moment to ensure different timestamp
+	time.Sleep(100 * time.Millisecond)
+	
+	// Create second file (newer)
+	err = os.WriteFile(file2Path, []byte("test"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write file2: %v", err)
+	}
+	
+	// Get file info for verification
+	file1Info, err := os.Stat(file1Path)
+	if err != nil {
+		t.Fatalf("Failed to stat file1: %v", err)
+	}
+	
+	file2Info, err := os.Stat(file2Path)
+	if err != nil {
+		t.Fatalf("Failed to stat file2: %v", err)
+	}
+	
+	// Test with single file
+	t.Run("SingleFile", func(t *testing.T) {
+		modTime, err := getFileModTime(file1Path)
+		if err != nil {
+			t.Fatalf("Failed to get mod time: %v", err)
+		}
+		
+		if !modTime.Equal(file1Info.ModTime()) {
+			t.Errorf("Expected mod time %v, got %v", file1Info.ModTime(), modTime)
+		}
+	})
+	
+	// Test with multiple files
+	t.Run("MultipleFiles", func(t *testing.T) {
+		modTime, err := getFileModTime(file1Path, file2Path)
+		if err != nil {
+			t.Fatalf("Failed to get mod time: %v", err)
+		}
+		
+		// Should return the latest mod time
+		if !modTime.Equal(file2Info.ModTime()) {
+			t.Errorf("Expected latest mod time %v, got %v", file2Info.ModTime(), modTime)
+		}
+	})
+	
+	// Test with non-existent file
+	t.Run("NonExistentFile", func(t *testing.T) {
+		_, err := getFileModTime(filepath.Join(tempDir, "nonexistent.txt"))
+		if err == nil {
+			t.Error("Expected error for non-existent file, got nil")
+		}
+	})
+}
+
+func TestTemplateNeedsUpdate(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir, err := os.MkdirTemp("", "template-update-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create test file
+	filePath := filepath.Join(tempDir, "test.html")
+	err = os.WriteFile(filePath, []byte("test"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	// Get file mod time
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("Failed to stat file: %v", err)
+	}
+	fileModTime := fileInfo.ModTime()
+
+	cfg := config.Config{}
+	tm := NewTemplateManager(cfg)
+
+	// Test when cache is empty
+	t.Run("EmptyCache", func(t *testing.T) {
+		tm.cache = make(map[string]TemplateCache)
+		needsUpdate, _, err := tm.templateNeedsUpdate("test", []string{filePath})
+		if err != nil {
+			t.Fatalf("Error checking if template needs update: %v", err)
+		}
+		if !needsUpdate {
+			t.Error("Expected template to need update when cache is empty")
+		}
+	})
+
+	// Test when cache entry exists but is older
+	t.Run("OlderCacheEntry", func(t *testing.T) {
+		tm.cache = make(map[string]TemplateCache)
+		tm.cache["test"] = TemplateCache{
+			ModTime: fileModTime.Add(-1 * time.Hour), // 1 hour older
+			Files:   []string{filePath},
+		}
+		
+		needsUpdate, _, err := tm.templateNeedsUpdate("test", []string{filePath})
+		if err != nil {
+			t.Fatalf("Error checking if template needs update: %v", err)
+		}
+		if !needsUpdate {
+			t.Error("Expected template to need update when cache entry is older")
+		}
+	})
+
+	// Test when cache entry exists and is newer
+	t.Run("NewerCacheEntry", func(t *testing.T) {
+		tm.cache = make(map[string]TemplateCache)
+		tm.cache["test"] = TemplateCache{
+			ModTime: fileModTime.Add(1 * time.Hour), // 1 hour newer (shouldn't happen in practice)
+			Files:   []string{filePath},
+		}
+		
+		needsUpdate, _, err := tm.templateNeedsUpdate("test", []string{filePath})
+		if err != nil {
+			t.Fatalf("Error checking if template needs update: %v", err)
+		}
+		if needsUpdate {
+			t.Error("Expected template to not need update when cache entry is newer")
+		}
+	})
+
+	// Test when file list has changed
+	t.Run("DifferentFiles", func(t *testing.T) {
+		tm.cache = make(map[string]TemplateCache)
+		tm.cache["test"] = TemplateCache{
+			ModTime: fileModTime,
+			Files:   []string{filePath, filepath.Join(tempDir, "other.html")}, // Different list
+		}
+		
+		needsUpdate, _, err := tm.templateNeedsUpdate("test", []string{filePath})
+		if err != nil {
+			t.Fatalf("Error checking if template needs update: %v", err)
+		}
+		if !needsUpdate {
+			t.Error("Expected template to need update when file list has changed")
+		}
+	})
 }

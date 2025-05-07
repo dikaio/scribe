@@ -25,6 +25,9 @@ type Server struct {
 func NewServer(cfg config.Config, port int, quiet bool) *Server {
 	builder := build.NewBuilder(cfg)
 	builder.SetQuiet(quiet)
+	// Enable development mode for the builder, which disables template caching
+	// This ensures templates are reloaded when changed during development
+	builder.SetDevMode(true)
 	
 	return &Server{
 		config:  cfg,

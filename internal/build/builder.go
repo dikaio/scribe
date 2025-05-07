@@ -20,6 +20,7 @@ type Builder struct {
 	pages    []content.Page
 	tags     map[string][]content.Page
 	quiet    bool
+	devMode  bool
 }
 
 // NewBuilder creates a new site builder
@@ -30,12 +31,20 @@ func NewBuilder(cfg config.Config) *Builder {
 		pages:    []content.Page{},
 		tags:     make(map[string][]content.Page),
 		quiet:    false,
+		devMode:  false,
 	}
 }
 
 // SetQuiet sets the quiet mode for the builder
 func (b *Builder) SetQuiet(quiet bool) {
 	b.quiet = quiet
+}
+
+// SetDevMode sets the development mode for the builder and renderer
+// Development mode disables template caching for live reloading
+func (b *Builder) SetDevMode(enabled bool) {
+	b.devMode = enabled
+	b.renderer.SetDevMode(enabled)
 }
 
 // Build builds the site

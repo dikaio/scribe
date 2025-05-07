@@ -175,14 +175,20 @@ func (a *App) cmdBuild(args []string) error {
 
 	// Initialize the builder
 	builder := build.NewBuilder(cfg)
+	
+	// Enable template caching for production builds
+	// This improves performance by not re-parsing templates unnecessarily
+	builder.SetDevMode(false)
 
 	// Build the site
+	start := time.Now()
 	err = builder.Build(sitePath)
 	if err != nil {
 		return fmt.Errorf("build failed: %w", err)
 	}
 
-	fmt.Printf("Site built successfully! Output directory: '%s'\n", cfg.OutputDir)
+	buildTime := time.Since(start)
+	fmt.Printf("Site built successfully in %v! Output directory: '%s'\n", buildTime, cfg.OutputDir)
 	return nil
 }
 
@@ -217,12 +223,16 @@ func (a *App) cmdRun(args []string) error {
 		return err
 	}
 
-	// Check if the site uses Tailwind CSS by looking for tailwind.config.js
-	tailwindConfigPath := filepath.Join(sitePath, "tailwind.config.js")
+	// Check if the site uses Tailwind CSS by looking for package.json and src/input.css
+	packageJsonPath := filepath.Join(sitePath, "package.json")
+	inputCssPath := filepath.Join(sitePath, "src", "input.css")
 	useTailwind := false
 	
-	if _, err := os.Stat(tailwindConfigPath); err == nil {
-		useTailwind = true
+	// If both package.json and input.css exist, assume it's a Tailwind site
+	if _, err := os.Stat(packageJsonPath); err == nil {
+		if _, err := os.Stat(inputCssPath); err == nil {
+			useTailwind = true
+		}
 	}
 
 	if !useTailwind {
@@ -394,90 +404,6 @@ func (a *App) createSampleContent(sitePath string) error {
 	return os.WriteFile(pagePath, []byte(templates.SamplePage), 0644)
 }
 
-// createDefaultTemplates creates default templates for a new site
-func (a *App) createDefaultTemplates(sitePath string, useTailwind bool) error {
-	var templatePaths map[string]string
-	
-	// Define template paths based on the selected theme
-	if useTailwind {
-		// Use Tailwind CSS templates
-		templatePaths = map[string]string{
-			filepath.Join(sitePath, "themes", "default", "layouts", "base.html"):   templates.TailwindBaseTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "single.html"): templates.TailwindSingleTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "list.html"):   templates.TailwindListTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "home.html"):   templates.TailwindHomeTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "page.html"):   templates.TailwindPageTemplate,
-		}
-	} else {
-		// Use default templates
-		templatePaths = map[string]string{
-			filepath.Join(sitePath, "themes", "default", "layouts", "base.html"):   templates.BaseTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "single.html"): templates.SingleTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "list.html"):   templates.ListTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "home.html"):   templates.HomeTemplate,
-			filepath.Join(sitePath, "themes", "default", "layouts", "page.html"):   templates.PageTemplate,
-		}
-	}
-
-	// Write template files
-	for path, content := range templatePaths {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to create template '%s': %w", path, err)
-		}
-	}
-
-	// Create static directory with CSS
-	cssPath := filepath.Join(sitePath, "themes", "default", "static", "css")
-	if err := os.MkdirAll(cssPath, 0755); err != nil {
-		return fmt.Errorf("failed to create CSS directory: %w", err)
-	}
-
-	// Write CSS file
-	cssFilePath := filepath.Join(cssPath, "style.css")
-	
-	if useTailwind {
-		// For Tailwind, create the necessary files
-		
-		// Create src directory for input CSS
-		srcPath := filepath.Join(sitePath, "src")
-		if err := os.MkdirAll(srcPath, 0755); err != nil {
-			return fmt.Errorf("failed to create src directory: %w", err)
-		}
-		
-		// Write Tailwind input.css
-		inputFilePath := filepath.Join(srcPath, "input.css")
-		if err := os.WriteFile(inputFilePath, []byte(templates.TailwindInputCSS), 0644); err != nil {
-			return fmt.Errorf("failed to create Tailwind input.css: %w", err)
-		}
-		
-		// Create empty output CSS file (will be populated by Tailwind CLI)
-		if err := os.WriteFile(cssFilePath, []byte("/* Tailwind CSS styles will be generated here */"), 0644); err != nil {
-			return fmt.Errorf("failed to create CSS file: %w", err)
-		}
-		
-		// Write tailwind.config.js
-		configFilePath := filepath.Join(sitePath, "tailwind.config.js")
-		if err := os.WriteFile(configFilePath, []byte(templates.TailwindCSSConfig), 0644); err != nil {
-			return fmt.Errorf("failed to create tailwind.config.js: %w", err)
-		}
-		
-		// Write package.json
-		packageFilePath := filepath.Join(sitePath, "package.json")
-		if err := os.WriteFile(packageFilePath, []byte(templates.TailwindPackageJSON), 0644); err != nil {
-			return fmt.Errorf("failed to create package.json: %w", err)
-		}
-		
-		// Create README.md with Tailwind instructions
-		readmeFilePath := filepath.Join(sitePath, "README.md")
-		if err := os.WriteFile(readmeFilePath, []byte(templates.TailwindREADME), 0644); err != nil {
-			return fmt.Errorf("failed to create README.md: %w", err)
-		}
-		
-		return nil
-	}
-	
-	// Write default CSS file
-	return os.WriteFile(cssFilePath, []byte(templates.StyleCSS), 0644)
-}
+// createDefaultTemplates moved to createDefaultTemplates.go
 
 // Test command removed as it was unimplemented

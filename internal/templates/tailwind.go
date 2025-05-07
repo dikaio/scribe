@@ -1,24 +1,15 @@
 package templates
 
-// TailwindCSSConfig is the Tailwind CSS configuration file
-const TailwindCSSConfig = `/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./themes/**/*.{html,js}",
-    "./layouts/**/*.{html,js}"
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}`
-
 // TailwindInputCSS is the input CSS file for Tailwind
-const TailwindInputCSS = `@tailwind base;
-@tailwind components;
-@tailwind utilities;
+const TailwindInputCSS = `@import "tailwindcss";
 
-/* Custom styles can be added here */
+/* This file only imports Tailwind CSS */
+/* All styling should be done with Tailwind utility classes in HTML */
+/* You can add custom Tailwind theme configuration below if needed */
+
+@layer base {
+  /* You can add custom base styles or theme customization here if needed */
+}
 `
 
 // TailwindBaseTemplate is the base HTML template with Tailwind CSS
@@ -34,7 +25,7 @@ const TailwindBaseTemplate = `<!DOCTYPE html>
 <body class="bg-white text-gray-800 font-sans">
     <header class="bg-gray-100 border-b border-gray-200 py-6 mb-10">
         <div class="container mx-auto px-4 max-w-4xl">
-            <h1 class="text-3xl font-bold"><a href="/" class="text-gray-800 no-underline">{{.Site.Title}}</a></h1>
+            <h1 class="text-3xl font-bold"><a href="/" class="text-gray-800 no-underline">Scribe</a></h1>
             <nav class="mt-2">
                 <ul class="flex space-x-6">
                     <li><a href="/" class="text-blue-600 hover:text-blue-800 no-underline">Home</a></li>
@@ -48,7 +39,7 @@ const TailwindBaseTemplate = `<!DOCTYPE html>
     </main>
     <footer class="bg-gray-100 border-t border-gray-200 py-6 text-center">
         <div class="container mx-auto px-4 max-w-4xl">
-            <p>&copy; {{.Site.Title}}</p>
+            <p>&copy; Scribe - A lightweight static site generator</p>
         </div>
     </footer>
 </body>
@@ -60,12 +51,13 @@ const TailwindSingleTemplate = `{{define "content"}}
     <header>
         <h1 class="text-4xl font-bold mb-2">{{.Page.Title}}</h1>
         <p class="text-gray-600 text-sm mb-6">
-            <time>{{formatDate .Page.Date}}</time>
+            <time>{{formatDate .Page.Date}}</time> • 2 min read
             {{if .Page.Tags}}
-            | Tags: 
-            {{range .Page.Tags}}
-            <a href="/tags/{{.}}/" class="text-blue-600 hover:text-blue-800">{{.}}</a>
-            {{end}}
+            <div class="flex flex-wrap gap-2 mt-2">
+                {{range .Page.Tags}}
+                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{{.}}</span>
+                {{end}}
+            </div>
             {{end}}
         </p>
     </header>
@@ -81,17 +73,12 @@ const TailwindListTemplate = `{{define "content"}}
 <div class="space-y-10">
     {{range .Pages}}
     <article class="pb-8 border-b border-gray-200">
-        <h2 class="text-2xl font-bold"><a href="/{{.URL}}/" class="text-blue-600 hover:text-blue-800">{{.Title}}</a></h2>
-        <p class="text-gray-600 text-sm mb-2">
-            <time>{{formatDate .Date}}</time>
-            {{if .Tags}}
-            | Tags: 
-            {{range .Tags}}
-            <a href="/tags/{{.}}/" class="text-blue-600 hover:text-blue-800">{{.}}</a>
-            {{end}}
-            {{end}}
+        <h2 class="text-2xl font-bold mb-1"><a href="/{{.URL}}/" class="text-gray-800 hover:text-blue-700 no-underline">{{.Title}}</a></h2>
+        <p class="text-gray-600 text-sm mb-3">
+            <time>{{formatDate .Date}}</time> • 2 min read
         </p>
-        <p class="text-gray-700">{{.Description}}</p>
+        <p class="text-gray-700 mb-2">{{.Description}}</p>
+        <p><a href="/{{.URL}}/" class="text-blue-600 hover:text-blue-800 font-medium">Read more →</a></p>
     </article>
     {{end}}
 </div>
@@ -103,17 +90,12 @@ const TailwindHomeTemplate = `{{define "content"}}
 <div class="space-y-10">
     {{range .Pages}}
     <article class="pb-8 border-b border-gray-200">
-        <h2 class="text-2xl font-bold"><a href="/{{.URL}}/" class="text-blue-600 hover:text-blue-800">{{.Title}}</a></h2>
-        <p class="text-gray-600 text-sm mb-2">
-            <time>{{formatDate .Date}}</time>
-            {{if .Tags}}
-            | Tags: 
-            {{range .Tags}}
-            <a href="/tags/{{.}}/" class="text-blue-600 hover:text-blue-800">{{.}}</a>
-            {{end}}
-            {{end}}
+        <h2 class="text-2xl font-bold mb-1"><a href="/{{.URL}}/" class="text-gray-800 hover:text-blue-700 no-underline">{{.Title}}</a></h2>
+        <p class="text-gray-600 text-sm mb-3">
+            <time>{{formatDate .Date}}</time> • 2 min read
         </p>
-        <p class="text-gray-700">{{.Description}}</p>
+        <p class="text-gray-700 mb-2">{{.Description}}</p>
+        <p><a href="/{{.URL}}/" class="text-blue-600 hover:text-blue-800 font-medium">Read more →</a></p>
     </article>
     {{end}}
 </div>
@@ -141,7 +123,8 @@ const TailwindPackageJSON = `{
     "build": "npx tailwindcss -i ./src/input.css -o ./static/css/style.css --minify"
   },
   "devDependencies": {
-    "tailwindcss": "^3.3.0"
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/cli": "^0.1.0"
   }
 }`
 
@@ -163,9 +146,18 @@ package-lock.json
 `
 
 // TailwindREADME is the README.md file with Tailwind CSS instructions
-const TailwindREADME = `# Scribe Site with Tailwind CSS
+const TailwindREADME = `# Scribe Site with Tailwind CSS 4.1
 
-This site was created using Scribe static site generator with Tailwind CSS.
+This site was created using Scribe static site generator with modern Tailwind CSS 4.1.
+
+## Tailwind CSS Approach
+
+This site uses a utility-first CSS approach with Tailwind CSS:
+
+- All styling is done with Tailwind utility classes directly in HTML templates
+- No custom CSS needed in most cases
+- Rapid development with composable utility classes
+- Optimized build process produces minimal CSS
 
 ## Development
 
@@ -190,6 +182,11 @@ To start developing your site:
 
 4. View your site at http://localhost:8080
 
+Or for convenience, use the all-in-one command:
+   ` + "```" + `
+   scribe run
+   ` + "```" + `
+
 ### Building for Production
 
 To build your site for production:
@@ -205,4 +202,13 @@ To build your site for production:
    ` + "```" + `
 
 The built site will be in the ` + "`public`" + ` directory.
+
+### Modern Tailwind CSS Setup
+
+This site uses the modern Tailwind CSS 4.1 approach:
+- Simplified setup with just ` + "`@import \"tailwindcss\"`" + ` in the CSS
+- Comes with both tailwindcss and @tailwindcss/cli for processing
+- No configuration files needed (no tailwind.config.js)
+- Customization available through ` + "`@layer`" + ` directives if needed
+- Focus on using utility classes in HTML rather than writing custom CSS
 `

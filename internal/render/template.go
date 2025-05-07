@@ -6,27 +6,31 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dikaio/scribe/internal/config"
 )
 
+// TemplateCache represents a cached template
+type TemplateCache struct {
+	Template *template.Template
+	ModTime  time.Time
+	Files    []string
+}
+
 // TemplateManager manages template loading and rendering
 type TemplateManager struct {
-	templates map[string]*template.Template
-	config    config.Config
+	templates    map[string]*template.Template
+	cache        map[string]TemplateCache
+	config       config.Config
+	funcMap      template.FuncMap
+	cacheMutex   sync.RWMutex
+	cachingEnabled bool
 }
 
 // NewTemplateManager creates a new template manager
 func NewTemplateManager(cfg config.Config) *TemplateManager {
-	return &TemplateManager{
-		templates: make(map[string]*template.Template),
-		config:    cfg,
-	}
-}
-
-// LoadTemplates loads all templates from the layouts directory
-func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 	// Define template functions
 	funcMap := template.FuncMap{
 		"formatDate": func(date time.Time) string {
@@ -37,6 +41,81 @@ func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 		"title": strings.Title,
 	}
 
+	return &TemplateManager{
+		templates:    make(map[string]*template.Template),
+		cache:        make(map[string]TemplateCache),
+		config:       cfg,
+		funcMap:      funcMap,
+		cachingEnabled: true,
+	}
+}
+
+// DisableCaching disables template caching (for development mode)
+func (tm *TemplateManager) DisableCaching() {
+	tm.cachingEnabled = false
+}
+
+// EnableCaching enables template caching (for production mode)
+func (tm *TemplateManager) EnableCaching() {
+	tm.cachingEnabled = true
+}
+
+// getFileModTime gets the latest modification time of a file or files
+func getFileModTime(files ...string) (time.Time, error) {
+	var latest time.Time
+
+	for _, file := range files {
+		info, err := os.Stat(file)
+		if err != nil {
+			return latest, err
+		}
+
+		if info.ModTime().After(latest) {
+			latest = info.ModTime()
+		}
+	}
+
+	return latest, nil
+}
+
+// templateNeedsUpdate checks if any template files have been modified
+func (tm *TemplateManager) templateNeedsUpdate(name string, files []string) (bool, time.Time, error) {
+	// Always return true if caching is disabled
+	if !tm.cachingEnabled {
+		return true, time.Time{}, nil
+	}
+
+	tm.cacheMutex.RLock()
+	cachedTemplate, exists := tm.cache[name]
+	tm.cacheMutex.RUnlock()
+
+	if !exists {
+		return true, time.Time{}, nil
+	}
+
+	// Check if file list has changed
+	if len(cachedTemplate.Files) != len(files) {
+		return true, time.Time{}, nil
+	}
+
+	for i, file := range files {
+		if cachedTemplate.Files[i] != file {
+			return true, time.Time{}, nil
+		}
+	}
+
+	// Get the most recent modification time
+	latestMod, err := getFileModTime(files...)
+	if err != nil {
+		return true, time.Time{}, err
+	}
+
+	// Check if any file has been modified since the template was cached
+	return latestMod.After(cachedTemplate.ModTime), latestMod, nil
+}
+
+// LoadTemplates loads all templates from the layouts directory
+func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 	// Load templates from site and theme
 	themePath := filepath.Join(sitePath, "themes", tm.config.Theme, "layouts")
 	siteLayoutPath := filepath.Join(sitePath, tm.config.LayoutDir)
@@ -90,15 +169,50 @@ func (tm *TemplateManager) LoadTemplates(sitePath string) error {
 		}
 	}
 	
-	// Parse all template combinations
+	// Parse all template combinations, using cache where possible
 	for name, files := range layoutTemplates {
+		// Check if the template needs to be reloaded
+		needsUpdate, modTime, err := tm.templateNeedsUpdate(name, files)
+		if err != nil {
+			return fmt.Errorf("error checking template modification time: %v", err)
+		}
+
+		if !needsUpdate {
+			// Use cached template
+			tm.cacheMutex.RLock()
+			tm.templates[name] = tm.cache[name].Template
+			tm.cacheMutex.RUnlock()
+			continue
+		}
+
 		// Parse the template set
-		tmpl, err := template.New(filepath.Base(files[0])).Funcs(funcMap).ParseFiles(files...)
+		tmpl, err := template.New(filepath.Base(files[0])).Funcs(tm.funcMap).ParseFiles(files...)
 		if err != nil {
 			return fmt.Errorf("error parsing template %s: %v", name, err)
 		}
 		
+		// Update the template in the current instance
 		tm.templates[name] = tmpl
+
+		// Update the cache if caching is enabled
+		if tm.cachingEnabled {
+			// If modTime is zero, get it now
+			if modTime.IsZero() {
+				modTime, err = getFileModTime(files...)
+				if err != nil {
+					return fmt.Errorf("error getting template modification time: %v", err)
+				}
+			}
+
+			// Cache the template
+			tm.cacheMutex.Lock()
+			tm.cache[name] = TemplateCache{
+				Template: tmpl,
+				ModTime:  modTime,
+				Files:    append([]string{}, files...), // Copy the files slice
+			}
+			tm.cacheMutex.Unlock()
+		}
 	}
 
 	return nil
