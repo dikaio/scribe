@@ -319,6 +319,13 @@ func TestTemplateCaching(t *testing.T) {
 			t.Error("Expected template to be reused from cache when file hasn't changed")
 		}
 
+		// Get current file info
+		fileInfo, err := os.Stat(singleTemplatePath)
+		if err != nil {
+			t.Fatalf("Failed to get file info: %v", err)
+		}
+		originalModTime := fileInfo.ModTime()
+
 		// Modify the template file
 		updatedContent := `{{define "content"}}<h1>Updated Content</h1>{{end}}`
 		err = os.WriteFile(singleTemplatePath, []byte(updatedContent), 0644)
@@ -327,7 +334,24 @@ func TestTemplateCaching(t *testing.T) {
 		}
 		
 		// Wait a moment to ensure filesystem has time to update
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+		
+		// Ensure the modification time is different by forcing a touch if needed
+		newFileInfo, err := os.Stat(singleTemplatePath)
+		if err != nil {
+			t.Fatalf("Failed to get updated file info: %v", err)
+		}
+		
+		// If the mod times are the same (possible on some filesystems),
+		// explicitly update the modification time
+		if newFileInfo.ModTime().Equal(originalModTime) {
+			// Set the modification time to now + 1 second to ensure it's different
+			newTime := time.Now().Add(1 * time.Second)
+			err = os.Chtimes(singleTemplatePath, newTime, newTime)
+			if err != nil {
+				t.Fatalf("Failed to update file modification time: %v", err)
+			}
+		}
 
 		// Reload templates
 		err = tm.LoadTemplates(tempDir)
