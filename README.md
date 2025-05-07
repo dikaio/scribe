@@ -266,6 +266,7 @@ The following optimizations could bring Scribe performance to match or exceed Hu
 Optimizations we're actively working on:
 
 - [x] **Parallel Processing**: Loading and processing content in parallel with worker pools
+- [x] **Template Caching**: Pre-compile and cache templates for improved performance
 - [ ] Add more test coverage for all components
 - [ ] Implement plugin architecture
 - [ ] Build additional themes

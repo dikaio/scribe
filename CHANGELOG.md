@@ -1,3 +1,10 @@
+## v0.4.13 (2025-05-07)
+
+### Bug Fixes
+
+- fix: update template caching implementation marks in roadmap
+- fix: refine CI workflow testing sequence
+
 ## v0.4.12 (2025-05-07)
 
 ### Features
