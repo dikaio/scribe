@@ -49,8 +49,20 @@ func extractContentPath(filePath string, slug string) string {
 		return filepath.Join("posts", slug)
 	}
 	
-	// For custom directories, we want the basename with extension removed as the slug
-	// for the URL path to ensure proper resolution
+	// If a custom slug is provided (different from the filename without extension),
+	// use it instead of the filename
+	if slug != "" {
+		baseName := filepath.Base(filePath)
+		extName := filepath.Ext(baseName)
+		fileNameWithoutExt := strings.TrimSuffix(baseName, extName)
+		
+		// If the slug differs from the filename, use the provided slug
+		if slug != fileNameWithoutExt {
+			return filepath.Join(dir, slug)
+		}
+	}
+	
+	// For normal cases where slug matches the filename without extension
 	baseName := filepath.Base(filePath)
 	extName := filepath.Ext(baseName)
 	fileNameWithoutExt := strings.TrimSuffix(baseName, extName)
