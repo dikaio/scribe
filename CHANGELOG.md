@@ -1,3 +1,18 @@
+## v0.5.0 (2025-05-07)
+
+### Features
+
+- feat: simplified CLI interface with focused command set
+- feat: improved interactive site creation experience
+- feat: automatic Tailwind detection and integration in serve command
+
+### Other Changes
+
+- refactor: remove build and run commands for cleaner interface
+- refactor: streamline new command to focus on site and page creation
+- docs: update documentation to reflect simplified command structure
+- test: add comprehensive tests for new CLI functionality
+
 ## v0.4.17 (2025-05-07)
 
 ### Bug Fixes
