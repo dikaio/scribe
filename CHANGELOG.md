@@ -1,3 +1,10 @@
+## v0.5.2 (2025-05-07)
+
+### Bug Fixes
+
+- fix: correct imports and slug handling in tests
+- fix: ensure test suite passes for URL path handling
+
 ## v0.5.1 (2025-05-07)
 
 ### Bug Fixes
