@@ -11,6 +11,7 @@ scribe
 
 # Test binary, built with `go test -c`
 *.test
+/pkg/cli/test-site
 
 # Output of the go coverage tool
 *.out
