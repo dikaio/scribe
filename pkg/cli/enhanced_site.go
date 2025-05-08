@@ -11,34 +11,26 @@ import (
 	"github.com/dikaio/scribe/internal/ui"
 )
 
-// createSiteEnhanced creates a new site with git initialization
-// and a streamlined setup process
+// createSiteEnhanced creates a new site with interactive prompts
+// for site name and theme selection
 func (a *App) createSiteEnhanced(initialName string) error {
-	ui.Header("Scribe")
+	ui.Header("Create New Site")
 
 	// Prompt for site name
-	sitePath := "."
 	siteName := initialName
 	
 	if siteName == "" {
-		siteName = ui.Prompt("Enter site name:", "")
+		siteName = ui.PromptWithValidation("What is your site named?", "", ui.Required("Site name is required"))
 	}
 	
-	if siteName != "" {
-		sitePath = siteName
-		// Create site directory
-		if err := os.MkdirAll(sitePath, 0755); err != nil {
-			return fmt.Errorf("failed to create site directory: %w", err)
-		}
+	// Create site directory
+	sitePath := siteName
+	if err := os.MkdirAll(sitePath, 0755); err != nil {
+		return fmt.Errorf("failed to create site directory: %w", err)
 	}
 
-	// Prompt for CSS framework
-	cssOptions := []ui.Option{
-		{Label: "Default CSS", Value: "default"},
-		{Label: "Tailwind CSS", Value: "tailwind"},
-	}
-	cssChoice := ui.SelectOption("Select Theme", "Choose a theme for your site", cssOptions, 0)
-	useTailwind := cssChoice == "tailwind"
+	// Prompt for Tailwind usage
+	useTailwind := ui.ConfirmYesNo("Would you like to use Tailwind?", false)
 
 	// Display banner
 	ui.Info(fmt.Sprintf("Creating new Scribe site in '%s'...", sitePath))
@@ -66,8 +58,8 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	cfg := config.DefaultConfig()
 	
 	// Set default values
-	cfg.Title = "My Scribe Site"
-	cfg.Description = "A site created with Scribe"
+	cfg.Title = siteName
+	cfg.Description = fmt.Sprintf("A %s site created with Scribe", siteName)
 	
 	if err := cfg.Save(sitePath); err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
@@ -87,24 +79,14 @@ func (a *App) createSiteEnhanced(initialName string) error {
 	a.createGitignore(sitePath, useTailwind)
 	a.initGitRepo(sitePath)
 
-	// Success message
-	ui.Divider()
-	ui.Success("Site created successfully!")
-	
-	// Automatically change directory if site name is not empty
-	// This will affect the current process but not the parent shell
-	// (which is why we need to show instructions to the user)
-	if siteName != "" {
-		os.Chdir(sitePath)
-	}
-	
 	// Automatically run npm install if using Tailwind
 	if useTailwind {
 		a.installNpmDependencies()
 	}
 	
-	// Show navigation instructions
-	a.showNextSteps(siteName, useTailwind)
+	// Success message with specific instruction
+	ui.Divider()
+	fmt.Printf("Your new site \"%s\" is ready, to start: cd \"%s\" && scribe serve\n", siteName, siteName)
 	
 	return nil
 }
@@ -152,31 +134,5 @@ func (a *App) installNpmDependencies() {
 	}
 }
 
-// showNextSteps shows guidance for getting started
-func (a *App) showNextSteps(siteName string, useTailwind bool) {
-	ui.Info("Next steps:")
-	
-	if siteName != "" {
-		ui.Info(fmt.Sprintf("  cd %s  (if not already in that directory)", siteName))
-	}
-	
-	if useTailwind {
-		ui.Info("  scribe run     (run both Tailwind compiler and development server)")
-		ui.Info("  - OR -")
-		ui.Info("  npm run dev    (in one terminal)")
-		ui.Info("  scribe serve   (in another terminal)")
-	} else {
-		ui.Info("  scribe serve   (start development server)")
-	}
-	
-	ui.Info("Then view your site at http://localhost:8080")
-	
-	// Show additional Tailwind-specific instructions
-	if useTailwind {
-		ui.Divider()
-		ui.Info("Tailwind CSS Setup:")
-		ui.Info("1. Node.js is required to use Tailwind CSS")
-		ui.Info("2. Run 'scribe run' to start both the Tailwind compiler and development server")
-		ui.Info("3. For more detailed instructions, see the README.md file")
-	}
-}
+// showNextSteps is removed since we now display a simple success message directly
+// in the createSiteEnhanced function

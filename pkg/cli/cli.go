@@ -57,13 +57,6 @@ func NewApp() *App {
 
 // registerCommands registers all available commands
 func (a *App) registerCommands() {
-	// Build command
-	a.Commands["build"] = Command{
-		Name:        "build",
-		Description: "Build the site",
-		Action:      a.cmdBuild,
-	}
-
 	// Serve command
 	a.Commands["serve"] = Command{
 		Name:        "serve",
@@ -71,21 +64,14 @@ func (a *App) registerCommands() {
 		Action:      a.cmdServe,
 	}
 
-	// Run command (serve + Tailwind watch)
-	a.Commands["run"] = Command{
-		Name:        "run",
-		Description: "Run development server and file watchers concurrently",
-		Action:      a.cmdRun,
-	}
-
-	// New site command
+	// New command for site and page creation
 	a.Commands["new"] = Command{
 		Name:        "new",
-		Description: "Create a new site, post, or page interactively",
+		Description: "Create a new site or page",
 		Action:      a.cmdNew,
 	}
 
-	// NOTE: Test command removed as it was unimplemented
+	// NOTE: Build and Run commands removed to simplify CLI interface
 }
 
 // Run executes the CLI application
@@ -130,13 +116,11 @@ func (a *App) showHelp() {
 	}
 	
 	fmt.Println("\nExamples:")
-	fmt.Printf("  %s new                  Create a new site in the current directory with interactive prompts\n", a.Name)
-	fmt.Printf("  %s new my-site          Create a new site in 'my-site' directory with interactive prompts\n", a.Name)
+	fmt.Printf("  %s new site             Create a new site with interactive prompts\n", a.Name)
+	fmt.Printf("  %s new page [path]      Create a new page at the specified path\n", a.Name)
 	fmt.Printf("  %s serve                Start development server for the current directory\n", a.Name)
-	fmt.Printf("  %s run                  Run development server and file watchers (for Tailwind CSS sites)\n", a.Name)
-	fmt.Printf("  %s build                Build the site in the current directory\n", a.Name)
 
-	fmt.Println("\nUse 'scribe help [command]' for more information about a command.")
+	fmt.Println("\nUse 'scribe --help' to display this help information.")
 }
 
 // Command implementations
@@ -194,17 +178,63 @@ func (a *App) cmdBuild(args []string) error {
 }
 
 // cmdServe implements the serve command, which starts a development server with live reload.
-// It takes an optional path argument (or uses the current directory if not provided).
+// It will also automatically detect and run the Tailwind CSS watcher if needed.
 func (a *App) cmdServe(args []string) error {
-	// Don't show the "Starting development server..." message
+	// Get site path and config
 	sitePath, cfg, err := a.getSitePathAndConfig(args, "")
 	if err != nil {
 		return err
 	}
 
+	// Check if the site uses Tailwind CSS
+	packageJsonPath := filepath.Join(sitePath, "package.json")
+	inputCssPath := filepath.Join(sitePath, "src", "input.css")
+	useTailwind := false
+	
+	// If both package.json and input.css exist, assume it's a Tailwind site
+	if _, err := os.Stat(packageJsonPath); err == nil {
+		if _, err := os.Stat(inputCssPath); err == nil {
+			useTailwind = true
+		}
+	}
+
+	// If Tailwind is used, start the CSS watcher
+	if useTailwind {
+		// Verify npm is installed
+		npmCmd := exec.Command("npm", "--version")
+		npmErr := npmCmd.Run()
+		if npmErr != nil {
+			return fmt.Errorf("npm not found. Please install Node.js and npm to use Tailwind CSS: %w", npmErr)
+		}
+
+		ui.Info("Starting Tailwind CSS watcher and development server...")
+		
+		// Start Tailwind CSS watcher in a goroutine
+		go func() {
+			tailwindCmd := exec.Command("npm", "run", "dev")
+			tailwindCmd.Stdout = os.Stdout
+			tailwindCmd.Stderr = os.Stderr
+			tailwindCmd.Dir = sitePath
+			
+			err := tailwindCmd.Start()
+			if err != nil {
+				ui.Error(fmt.Sprintf("Failed to start Tailwind CSS watcher: %v", err))
+				return
+			}
+			
+			// Wait for the process to finish
+			tailwindCmd.Wait()
+		}()
+
+		// Give Tailwind a moment to start
+		time.Sleep(1 * time.Second)
+	} else {
+		ui.Info("Starting development server...")
+	}
+
 	// Initialize the server (default port: 8080)
 	port := 8080
-	server := server.NewServer(cfg, port, true) // true = quiet mode
+	server := server.NewServer(cfg, port, false) // false = not quiet mode
 
 	// Start the server
 	err = server.Start(sitePath)
@@ -291,94 +321,41 @@ func (a *App) cmdRun(args []string) error {
 }
 
 
-// cmdNew implements commands for creating new resources (site, post, page, etc.)
+// cmdNew implements commands for creating new sites or pages
 func (a *App) cmdNew(args []string) error {
-	// If no arguments, assume we're creating a new site
+	// If no arguments, show help for new command
 	if len(args) < 1 {
-		return a.createNewSite("")
+		fmt.Println("Usage:")
+		fmt.Println("  scribe new site           Create a new site with interactive prompts")
+		fmt.Println("  scribe new page [path]    Create a new page at the specified path")
+		return nil
 	}
 
-	// If first arg starts with a letter and not "site", "post", "page", or "content", 
-	// treat it as a site name
-	firstArg := args[0]
-	if firstArg != "site" && firstArg != "post" && firstArg != "page" && firstArg != "content" {
-		return a.createNewSite(firstArg)
-	}
-
-	// Handle all resource types
-	resType := firstArg
+	// Handle resource types
+	resType := args[0]
 	
 	switch resType {
 	case "site":
-		// For sites, the second arg is the site name
-		name := ""
-		if len(args) > 1 {
-			name = args[1]
-		}
-		return a.createNewSite(name)
-		
-	case "post":
-		// For posts, second arg can be either a title or path
-		var title, path string
-		if len(args) > 1 {
-			// If the argument has a path-like format (contains / or .md), 
-			// treat it as a path, otherwise as a title
-			if strings.Contains(args[1], "/") || strings.HasSuffix(args[1], ".md") {
-				path = args[1]
-				// If there's a third argument, it's the title
-				if len(args) > 2 {
-					title = args[2]
-				}
-			} else {
-				title = args[1]
-				// If there's a third argument, it's a path
-				if len(args) > 2 {
-					path = args[2]
-				}
-			}
-		}
-		return a.createNewPost(title, path)
+		// For sites, we don't need a name parameter anymore as it will be prompted
+		return a.createNewSite("")
 		
 	case "page":
-		// For pages, second arg can be either a title or path
-		var title, path string
-		if len(args) > 1 {
-			// If the argument has a path-like format (contains / or .md), 
-			// treat it as a path, otherwise as a title
-			if strings.Contains(args[1], "/") || strings.HasSuffix(args[1], ".md") {
-				path = args[1]
-				// If there's a third argument, it's the title
-				if len(args) > 2 {
-					title = args[2]
-				}
-			} else {
-				title = args[1]
-				// If there's a third argument, it's a path
-				if len(args) > 2 {
-					path = args[2]
-				}
-			}
-		}
-		return a.createNewPage(title, path)
-		
-	case "content":
-		// Generic content creation with required path argument
+		// For pages, second arg is the path
 		if len(args) < 2 {
-			return fmt.Errorf("content command requires a path argument")
+			return fmt.Errorf("page command requires a path argument")
 		}
-		
 		path := args[1]
-		title := ""
 		
-		// If there's a third argument, it's the title
+		// Title is optional, will be prompted if not provided
+		title := ""
 		if len(args) > 2 {
 			title = args[2]
 		}
 		
-		return a.createNewContent(path, title)
+		return a.createNewPage(title, path)
 	
 	default:
-		return fmt.Errorf("unknown resource type: %s", resType)
+		return fmt.Errorf("unknown resource type: %s. Use 'site' or 'page'", resType)
 	}
 }
 

@@ -53,11 +53,11 @@ You should see the version information displayed.
 ### Create a new site
 
 ```bash
-# Create a new site interactively
-scribe new mysite
+# Create a new site with interactive prompts
+scribe new site
 
 # Navigate to the site directory
-cd mysite
+cd [your-site-name]
 
 # Start the development server
 scribe serve
@@ -68,30 +68,11 @@ Open your browser at [http://localhost:8080](http://localhost:8080) to see your 
 ### Create content
 
 ```bash
-# Create a new post (in content/posts/)
-scribe new post "My First Post"
-
-# Create a new page (in content/)
-scribe new page "About Me"
-
-# Create content at a specific path (directory is created automatically)
-scribe new content articles/tech/golang.md "Go Programming Guide"
-
-# Create content in a custom directory
-scribe new page articles/tutorials "Getting Started with Scribe"
-
-# Path-first syntax (useful for scripts)
-scribe new post docs/guides/deployment.md "Deployment Guide"
+# Create a new page at a specific path
+scribe new page about.md
 ```
 
-### Build your site
-
-```bash
-# Build the site
-scribe build
-```
-
-The built site will be in the `public` directory by default.
+The development server will automatically detect changes and reload.
 
 
 ## Site Structure
@@ -160,13 +141,10 @@ Site configuration is stored in `config.jsonc`:
 
 | Command                   | Description                                 |
 | ------------------------- | ------------------------------------------- |
-| `scribe build [path]`     | Build the site                              |
-| `scribe serve [path]`     | Start a development server with live reload |
-| `scribe run [path]`       | Run development server and file watchers    |
-| `scribe new [name]`       | Create a new site interactively             |
-| `scribe new post [title]` | Create a new blog post                      |
-| `scribe new page [title]` | Create a new page                           |
-| `scribe help`             | Show help information                       |
+| `scribe --help`           | Show help information                       |
+| `scribe serve`            | Start a development server with live reload |
+| `scribe new site`         | Create a new site with interactive prompts  |
+| `scribe new page [path]`  | Create a new page at the specified path     |
 
 ## Templating
 
@@ -203,12 +181,8 @@ A utility-first CSS framework that allows for rapid UI development. When choosin
 3. Dependencies will be automatically installed during site creation
 4. To start development:
    ```bash
-   # Run both Tailwind watcher and development server
-   scribe run
-   
-   # Or run each process separately
-   npm run dev     # In terminal 1
-   scribe serve    # In terminal 2
+   # The serve command automatically detects and runs Tailwind
+   scribe serve
    ```
 5. Tailwind CSS styles will be compiled from `src/input.css` to `static/css/style.css`
 6. For production, run `npm run build` to create an optimized CSS file
@@ -244,36 +218,17 @@ Scribe uses a file-based routing system similar to Next.js or Astro. URLs are de
 
 This intuitive system makes it easy to organize your content in logical sections while maintaining clean URLs. You can create any directory structure you need, and Scribe will automatically generate the corresponding URLs.
 
-### Flexible Content Creation
+### Content Creation
 
-The CLI provides flexible ways to create content anywhere in your site structure:
+The CLI provides a simple way to create content:
 
-1. **Traditional Commands**:
-   ```bash
-   scribe new post "My First Post"  # Creates content/posts/my-first-post.md
-   scribe new page "About"          # Creates content/about.md
-   ```
+```bash
+# Create a new page at a specific path
+scribe new page about.md
 
-2. **Path-Based Creation**:
-   ```bash
-   # Create content in a specific directory
-   scribe new post articles/golang "Go Tutorial"
-   
-   # Create content with specific filename
-   scribe new page tutorials/getting-started.md "Getting Started Guide"
-   ```
-
-3. **Generic Content Command**:
-   ```bash
-   # For any content type and location
-   scribe new content services/api/rest.md "REST API Documentation"
-   ```
-
-4. **Path-First Syntax** (useful in scripts):
-   ```bash
-   # If the second argument contains a path (/ or .md), it's treated as the path
-   scribe new post docs/guides/deployment.md "Deployment Guide"
-   ```
+# Create a new page with a title
+scribe new page about.md "About Me"
+```
 
 Directories are automatically created if they don't exist, making it easy to organize your content however you prefer.
 
