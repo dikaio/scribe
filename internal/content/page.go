@@ -49,8 +49,14 @@ func extractContentPath(filePath string, slug string) string {
 		return filepath.Join("posts", slug)
 	}
 	
-	// Join directory with slug for the final URL
-	return filepath.Join(dir, slug)
+	// For custom directories, we want the basename with extension removed as the slug
+	// for the URL path to ensure proper resolution
+	baseName := filepath.Base(filePath)
+	extName := filepath.Ext(baseName)
+	fileNameWithoutExt := strings.TrimSuffix(baseName, extName)
+	
+	// Join directory with filename (no extension) for the final URL
+	return filepath.Join(dir, fileNameWithoutExt)
 }
 
 func LoadPage(filePath string, baseURL string) (Page, error) {
@@ -77,6 +83,7 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 	// Generate slug from filename if not specified
 	slug := frontMatter.Slug
 	if slug == "" {
+		// This is just for the page metadata - the URL is handled separately
 		baseName := filepath.Base(filePath)
 		extName := filepath.Ext(baseName)
 		slug = strings.TrimSuffix(baseName, extName)
@@ -85,7 +92,20 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 	// Determine URL from the file path, preserving directory structure
 	url := extractContentPath(filePath, slug)
 
-	permalink := filepath.Join(baseURL, url)
+	// Add trailing slash for cleaner URLs (remove .html extension)
+	// but don't add double slashes
+	if !strings.HasSuffix(url, "/") {
+		url = url + "/"
+	}
+
+	// For permalinks, join baseURL and url properly
+	permalink := baseURL
+	if !strings.HasSuffix(permalink, "/") {
+		permalink += "/"
+	}
+	// Remove leading slash from url if it exists to avoid double slashes
+	cleanURL := strings.TrimPrefix(url, "/")
+	permalink = permalink + cleanURL
 
 	// Create page
 	page = Page{

@@ -309,7 +309,9 @@ func (b *Builder) generatePages(outputPath string) error {
 	// Create jobs for all pages
 	jobs := make([]interface{}, len(b.pages))
 	for i, page := range b.pages {
-		outputFile := filepath.Join(outputPath, page.URL, "index.html")
+		// Clean URL for file path construction
+		cleanURL := strings.TrimSuffix(page.URL, "/")
+		outputFile := filepath.Join(outputPath, cleanURL, "index.html")
 		jobs[i] = pageRenderJob{
 			Page:       page,
 			OutputFile: outputFile,
@@ -323,8 +325,6 @@ func (b *Builder) generatePages(outputPath string) error {
 	if len(errors) > 0 {
 		return errors[0]
 	}
-
-	// Removed generation reporting
 
 	return nil
 }
