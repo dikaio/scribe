@@ -1,3 +1,10 @@
+## v0.5.1 (2025-05-07)
+
+### Bug Fixes
+
+- fix: resolve 404 errors for custom page paths
+- fix: improved URL generation for pages created with custom directories
+
 ## v0.5.0 (2025-05-07)
 
 ### Features
