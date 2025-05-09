@@ -53,24 +53,24 @@ tasks:
   release:
     desc: Create a new release (patch, minor, or major)
     cmds:
-      - go run scripts/release.go {{.CLI_ARGS}}
+      - go run ./cmd/release {{.CLI_ARGS}}
       
   release:patch:
     desc: Create a patch release
     cmds:
-      - go run scripts/release.go --type patch
+      - go run ./cmd/release --type patch
       
   release:minor:
     desc: Create a minor release
     cmds:
-      - go run scripts/release.go --type minor
+      - go run ./cmd/release --type minor
       
   release:major:
     desc: Create a major release
     cmds:
-      - go run scripts/release.go --type major
+      - go run ./cmd/release --type major
       
   release:dry-run:
     desc: Test the release process without making changes
     cmds:
-      - go run scripts/release.go --dry-run
+      - go run ./cmd/release --dry-run

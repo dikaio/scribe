@@ -1,4 +1,5 @@
-package main
+// Package release provides functionality for creating and managing Scribe releases
+package release
 
 import (
 	"flag"
@@ -26,51 +27,55 @@ type Options struct {
 	Help        bool
 }
 
-func main() {
+// Execute performs the release process with the provided arguments
+func Execute(args []string) error {
 	// Parse command line options
-	options := parseOptions()
+	options, err := parseOptions(args)
+	if err != nil {
+		return err
+	}
 
 	if options.Help {
 		showHelp()
-		return
+		return nil
 	}
 
 	// Ensure we're in the project root
 	if err := changeToProjectRoot(); err != nil {
-		exitWithError(err.Error())
+		return fmt.Errorf("error: %s", err.Error())
 	}
 
 	// Check if working directory is clean
 	if clean, err := isWorkingDirClean(); err != nil {
-		exitWithError(fmt.Sprintf("Error checking working directory: %v", err))
+		return fmt.Errorf("error checking working directory: %v", err)
 	} else if !clean {
-		exitWithError("Working directory is not clean. Commit or stash changes first.")
+		return fmt.Errorf("working directory is not clean. Commit or stash changes first")
 	}
 
 	// Check if we're on the main branch
 	if branch, err := getCurrentBranch(); err != nil {
-		exitWithError(fmt.Sprintf("Error getting current branch: %v", err))
+		return fmt.Errorf("error getting current branch: %v", err)
 	} else if branch != "main" {
-		exitWithError(fmt.Sprintf("Not on main branch (currently on '%s'). Switch to main branch first.", branch))
+		return fmt.Errorf("not on main branch (currently on '%s'). Switch to main branch first", branch)
 	}
 
 	// Pull latest changes
 	printYellow("Pulling latest changes from remote...")
 	if err := pullLatestChanges(); err != nil {
-		exitWithError(fmt.Sprintf("Error pulling latest changes: %v", err))
+		return fmt.Errorf("error pulling latest changes: %v", err)
 	}
 
 	// Run tests
 	printYellow("Running tests...")
 	if err := runTests(); err != nil {
-		exitWithError(fmt.Sprintf("Tests failed: %v", err))
+		return fmt.Errorf("tests failed: %v", err)
 	}
 
 	// Ensure go.mod exists
 	if !fileExists("go.mod") {
 		printYellow("Creating go.mod file for zero-dependency project...")
 		if err := initGoMod(); err != nil {
-			exitWithError(fmt.Sprintf("Error initializing go.mod: %v", err))
+			return fmt.Errorf("error initializing go.mod: %v", err)
 		}
 	}
 
@@ -78,7 +83,7 @@ func main() {
 	printYellow("Reading current version...")
 	currentVersion, err := getCurrentVersion()
 	if err != nil {
-		exitWithError(fmt.Sprintf("Error getting current version: %v", err))
+		return fmt.Errorf("error getting current version: %v", err)
 	}
 	printGreen(fmt.Sprintf("Current version: v%s", currentVersion))
 
@@ -90,7 +95,7 @@ func main() {
 	printYellow("Generating changelog...")
 	changelogContent, err := generateChangelog(newVersion)
 	if err != nil {
-		exitWithError(fmt.Sprintf("Error generating changelog: %v", err))
+		return fmt.Errorf("error generating changelog: %v", err)
 	}
 
 	printYellow("Generated changelog:")
@@ -99,71 +104,76 @@ func main() {
 	// Update version in code
 	printYellow("Updating version in code...")
 	if err := updateVersionInCode(newVersion); err != nil {
-		exitWithError(fmt.Sprintf("Error updating version in code: %v", err))
+		return fmt.Errorf("error updating version in code: %v", err)
 	}
 
 	// Update or create CHANGELOG.md
 	printYellow("Updating CHANGELOG.md...")
 	if err := updateChangelog(changelogContent); err != nil {
-		exitWithError(fmt.Sprintf("Error updating changelog: %v", err))
+		return fmt.Errorf("error updating changelog: %v", err)
 	}
 
 	// If dry run, revert changes and exit
 	if options.DryRun {
 		printYellow("Dry run mode. Changes will not be committed or pushed.")
 		if err := revertChanges(); err != nil {
-			exitWithError(fmt.Sprintf("Error reverting changes: %v", err))
+			return fmt.Errorf("error reverting changes: %v", err)
 		}
 		printGreen("Dry run completed successfully.")
-		return
+		return nil
 	}
 
 	// Commit changes
 	printYellow("Committing changes...")
 	if err := commitChanges(newVersion); err != nil {
-		exitWithError(fmt.Sprintf("Error committing changes: %v", err))
+		return fmt.Errorf("error committing changes: %v", err)
 	}
 
 	// Create and push tag
 	printYellow(fmt.Sprintf("Creating and pushing tag v%s...", newVersion))
 	if err := createAndPushTag(newVersion); err != nil {
-		exitWithError(fmt.Sprintf("Error creating and pushing tag: %v", err))
+		return fmt.Errorf("error creating and pushing tag: %v", err)
 	}
 
 	printGreen(fmt.Sprintf("Release v%s created and pushed successfully!", newVersion))
 	printYellow("GitHub Actions will now build and publish the release.")
 	printYellow("You can monitor the progress at: https://github.com/dikaio/scribe/actions")
+	
+	return nil
 }
 
 // parseOptions parses command line options
-func parseOptions() Options {
+func parseOptions(args []string) (Options, error) {
 	options := Options{
 		ReleaseType: "patch", // Default to patch
 	}
 
 	// Define command line flags
-	flag.StringVar(&options.ReleaseType, "type", "patch", "Release type: patch, minor, major")
-	flag.StringVar(&options.ReleaseType, "t", "patch", "Release type (shorthand)")
-	flag.BoolVar(&options.DryRun, "dry-run", false, "Do everything except the actual release")
-	flag.BoolVar(&options.DryRun, "d", false, "Dry run (shorthand)")
-	flag.BoolVar(&options.Help, "help", false, "Show this help message")
-	flag.BoolVar(&options.Help, "h", false, "Show help (shorthand)")
+	fs := flag.NewFlagSet("release", flag.ExitOnError)
+	fs.StringVar(&options.ReleaseType, "type", "patch", "Release type: patch, minor, major")
+	fs.StringVar(&options.ReleaseType, "t", "patch", "Release type (shorthand)")
+	fs.BoolVar(&options.DryRun, "dry-run", false, "Do everything except the actual release")
+	fs.BoolVar(&options.DryRun, "d", false, "Dry run (shorthand)")
+	fs.BoolVar(&options.Help, "help", false, "Show this help message")
+	fs.BoolVar(&options.Help, "h", false, "Show help (shorthand)")
 
 	// Parse flags
-	flag.Parse()
+	if err := fs.Parse(args); err != nil {
+		return options, err
+	}
 
 	// Validate release type
 	if options.ReleaseType != "patch" && options.ReleaseType != "minor" && options.ReleaseType != "major" {
-		exitWithError(fmt.Sprintf("Invalid release type: %s. Use patch, minor, or major.", options.ReleaseType))
+		return options, fmt.Errorf("invalid release type: %s. Use patch, minor, or major", options.ReleaseType)
 	}
 
-	return options
+	return options, nil
 }
 
 // showHelp displays help information
 func showHelp() {
 	fmt.Printf("%sScribe Release Automation%s\n\n", colorYellow, colorReset)
-	fmt.Println("Usage: go run scripts/release.go [OPTIONS]")
+	fmt.Println("Usage: scribe-release [OPTIONS]")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("  -t, --type TYPE    Release type: patch, minor, major (default: patch)")
@@ -171,10 +181,10 @@ func showHelp() {
 	fmt.Println("  -h, --help         Show this help message")
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  go run scripts/release.go                # Creates a patch release")
-	fmt.Println("  go run scripts/release.go --type minor   # Creates a minor release")
-	fmt.Println("  go run scripts/release.go --type major   # Creates a major release")
-	fmt.Println("  go run scripts/release.go --dry-run      # Simulates the release process")
+	fmt.Println("  scribe-release                # Creates a patch release")
+	fmt.Println("  scribe-release --type minor   # Creates a minor release")
+	fmt.Println("  scribe-release --type major   # Creates a major release")
+	fmt.Println("  scribe-release --dry-run      # Simulates the release process")
 }
 
 // changeToProjectRoot ensures we're running from the project root
@@ -467,9 +477,4 @@ func printGreen(message string) {
 
 func printYellow(message string) {
 	fmt.Printf("%s%s%s\n", colorYellow, message, colorReset)
-}
-
-func exitWithError(message string) {
-	printRed("Error: " + message)
-	os.Exit(1)
 }

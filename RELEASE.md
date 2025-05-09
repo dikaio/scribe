@@ -2,6 +2,8 @@
 
 This document describes the process for creating new releases of Scribe.
 
+The release script is implemented as a Go package in `internal/release` with a command-line interface in `cmd/release`.
+
 ## Release Steps
 
 1. Make sure all your changes are committed and pushed to GitHub:
