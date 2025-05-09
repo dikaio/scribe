@@ -180,15 +180,13 @@ func showHelp() {
 
 // changeToProjectRoot ensures we're running from the project root
 func changeToProjectRoot() error {
-	// Get the directory where this script is located
-	exePath, err := os.Executable()
-	if err != nil {
-		return err
+	// When running with go run, we're already in the project root
+	// No need to change directory, just confirm we have a git repo
+	cmd := exec.Command("git", "rev-parse", "--is-inside-work-tree")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("not in a git repository: %v", err)
 	}
-
-	// Get the script directory, then change to its parent directory (project root)
-	scriptDir := filepath.Dir(exePath)
-	return os.Chdir(filepath.Join(scriptDir, ".."))
+	return nil
 }
 
 // isWorkingDirClean checks if the Git working directory is clean
