@@ -49,3 +49,28 @@ tasks:
     cmds:
       - rm -rf bin/
       - rm -rf build/
+      
+  release:
+    desc: Create a new release (patch, minor, or major)
+    cmds:
+      - go run scripts/release.go {{.CLI_ARGS}}
+      
+  release:patch:
+    desc: Create a patch release
+    cmds:
+      - go run scripts/release.go --type patch
+      
+  release:minor:
+    desc: Create a minor release
+    cmds:
+      - go run scripts/release.go --type minor
+      
+  release:major:
+    desc: Create a major release
+    cmds:
+      - go run scripts/release.go --type major
+      
+  release:dry-run:
+    desc: Test the release process without making changes
+    cmds:
+      - go run scripts/release.go --dry-run
