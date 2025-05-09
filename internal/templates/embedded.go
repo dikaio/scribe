@@ -44,19 +44,9 @@ func GetDefaultTemplate(name string) (string, error) {
 	return GetEmbeddedTemplate("default", name)
 }
 
-// GetTailwindTemplate returns the Tailwind template content using the embedded files
-func GetTailwindTemplate(name string) (string, error) {
-	return GetEmbeddedTemplate("tailwind", name)
-}
-
 // GetAllDefaultTemplates returns all embedded default templates
 func GetAllDefaultTemplates() (map[string]string, error) {
 	return getAllTemplates("default")
-}
-
-// GetAllTailwindTemplates returns all embedded Tailwind templates
-func GetAllTailwindTemplates() (map[string]string, error) {
-	return getAllTemplates("tailwind")
 }
 
 // getAllTemplates is a helper to get all templates for a theme

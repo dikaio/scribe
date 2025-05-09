@@ -87,14 +87,10 @@ mysite/
 │   └── *.md           # Regular pages
 ├── layouts/           # Custom template layouts (optional)
 ├── static/            # Static files (copied as-is)
-├── themes/            # Site themes
-│   └── default/       # Default theme
-│       ├── layouts/   # Theme layouts
-│       └── static/    # Theme static files
-├── src/               # Source files (only with Tailwind CSS)
-│   └── input.css      # Tailwind CSS input file
-├── tailwind.config.js # Tailwind CSS config (only with Tailwind CSS)
-└── package.json       # Node.js package file (only with Tailwind CSS)
+└── themes/            # Site themes
+    └── default/       # Default theme
+        ├── layouts/   # Theme layouts
+        └── static/    # Theme static files
 ```
 
 ## Content Format
@@ -143,8 +139,31 @@ Site configuration is stored in `config.jsonc`:
 | ------------------------- | ------------------------------------------- |
 | `scribe --help`           | Show help information                       |
 | `scribe serve`            | Start a development server with live reload |
+| `scribe build`            | Build the static site                       |
 | `scribe new site`         | Create a new site with interactive prompts  |
 | `scribe new page [path]`  | Create a new page at the specified path     |
+
+### Task Commands
+
+You can also use the included Taskfile to run common commands:
+
+```bash
+# Build the project
+task build
+
+# Install the project
+task install
+
+# Create a new site
+task new -- my-site-name
+
+# Serve a site for development
+task serve
+
+
+# Run tests
+task test
+```
 
 ## Templating
 
@@ -164,28 +183,9 @@ Template data includes:
 
 ## Customization
 
-### CSS Frameworks
+### CSS Framework
 
-When creating a new site, Scribe offers two CSS framework options:
-
-#### Default CSS
-
-A simple, lightweight CSS framework with no external dependencies.
-
-#### Tailwind CSS
-
-A utility-first CSS framework that allows for rapid UI development. When choosing Tailwind CSS:
-
-1. Node.js is required to use Tailwind CSS
-2. The site will include a basic Tailwind CSS configuration
-3. Dependencies will be automatically installed during site creation
-4. To start development:
-   ```bash
-   # The serve command automatically detects and runs Tailwind
-   scribe serve
-   ```
-5. Tailwind CSS styles will be compiled from `src/input.css` to `static/css/style.css`
-6. For production, run `npm run build` to create an optimized CSS file
+Scribe includes a simple, lightweight CSS framework with no external dependencies.
 
 ### Custom Themes
 

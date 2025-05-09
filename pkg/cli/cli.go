@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"github.com/dikaio/scribe/internal/content"
 	"github.com/dikaio/scribe/internal/server"
 	"github.com/dikaio/scribe/internal/templates"
-	"github.com/dikaio/scribe/internal/ui"
 )
 
 // Version information set by build flags
@@ -64,14 +62,19 @@ func (a *App) registerCommands() {
 		Action:      a.cmdServe,
 	}
 
+	// Build command
+	a.Commands["build"] = Command{
+		Name:        "build",
+		Description: "Build a static site",
+		Action:      a.cmdBuild,
+	}
+
 	// New command for site and page creation
 	a.Commands["new"] = Command{
 		Name:        "new",
 		Description: "Create a new site or page",
 		Action:      a.cmdNew,
 	}
-
-	// NOTE: Build and Run commands removed to simplify CLI interface
 }
 
 // Run executes the CLI application
@@ -119,6 +122,7 @@ func (a *App) showHelp() {
 	fmt.Printf("  %s new site             Create a new site with interactive prompts\n", a.Name)
 	fmt.Printf("  %s new page [path]      Create a new page at the specified path\n", a.Name)
 	fmt.Printf("  %s serve                Start development server for the current directory\n", a.Name)
+	fmt.Printf("  %s build                Build the static site in the current directory\n", a.Name)
 
 	fmt.Println("\nUse 'scribe --help' to display this help information.")
 }
@@ -178,7 +182,6 @@ func (a *App) cmdBuild(args []string) error {
 }
 
 // cmdServe implements the serve command, which starts a development server with live reload.
-// It will also automatically detect and run the Tailwind CSS watcher if needed.
 func (a *App) cmdServe(args []string) error {
 	// Get site path and config
 	sitePath, cfg, err := a.getSitePathAndConfig(args, "")
@@ -186,51 +189,7 @@ func (a *App) cmdServe(args []string) error {
 		return err
 	}
 
-	// Check if the site uses Tailwind CSS
-	packageJsonPath := filepath.Join(sitePath, "package.json")
-	inputCssPath := filepath.Join(sitePath, "src", "input.css")
-	useTailwind := false
-	
-	// If both package.json and input.css exist, assume it's a Tailwind site
-	if _, err := os.Stat(packageJsonPath); err == nil {
-		if _, err := os.Stat(inputCssPath); err == nil {
-			useTailwind = true
-		}
-	}
-
-	// If Tailwind is used, start the CSS watcher
-	if useTailwind {
-		// Verify npm is installed
-		npmCmd := exec.Command("npm", "--version")
-		npmErr := npmCmd.Run()
-		if npmErr != nil {
-			return fmt.Errorf("npm not found. Please install Node.js and npm to use Tailwind CSS: %w", npmErr)
-		}
-
-		ui.Info("Starting Tailwind CSS watcher and development server...")
-		
-		// Start Tailwind CSS watcher in a goroutine
-		go func() {
-			tailwindCmd := exec.Command("npm", "run", "dev")
-			tailwindCmd.Stdout = os.Stdout
-			tailwindCmd.Stderr = os.Stderr
-			tailwindCmd.Dir = sitePath
-			
-			err := tailwindCmd.Start()
-			if err != nil {
-				ui.Error(fmt.Sprintf("Failed to start Tailwind CSS watcher: %v", err))
-				return
-			}
-			
-			// Wait for the process to finish
-			tailwindCmd.Wait()
-		}()
-
-		// Give Tailwind a moment to start
-		time.Sleep(1 * time.Second)
-	} else {
-		ui.Info("Starting development server...")
-	}
+	Info("Starting development server...")
 
 	// Initialize the server (default port: 8080)
 	port := 8080
@@ -245,79 +204,9 @@ func (a *App) cmdServe(args []string) error {
 	return nil
 }
 
-// cmdRun implements the run command, which starts both the Tailwind CSS watcher and the development server.
-// It automatically detects if the site uses Tailwind CSS.
+// cmdRun is now an alias for cmdServe
 func (a *App) cmdRun(args []string) error {
-	// Get site path and config
-	sitePath, cfg, err := a.getSitePathAndConfig(args, "")
-	if err != nil {
-		return err
-	}
-
-	// Check if the site uses Tailwind CSS by looking for package.json and src/input.css
-	packageJsonPath := filepath.Join(sitePath, "package.json")
-	inputCssPath := filepath.Join(sitePath, "src", "input.css")
-	useTailwind := false
-	
-	// If both package.json and input.css exist, assume it's a Tailwind site
-	if _, err := os.Stat(packageJsonPath); err == nil {
-		if _, err := os.Stat(inputCssPath); err == nil {
-			useTailwind = true
-		}
-	}
-
-	if !useTailwind {
-		// If no Tailwind CSS is used, just start the server
-		ui.Info("No Tailwind CSS configuration detected. Starting development server only.")
-		return a.cmdServe(args)
-	}
-
-	// Verify npm is installed
-	npmCmd := exec.Command("npm", "--version")
-	npmErr := npmCmd.Run()
-	if npmErr != nil {
-		return fmt.Errorf("npm not found. Please install Node.js and npm to use the run command with Tailwind CSS: %w", npmErr)
-	}
-
-	// Start Tailwind CSS watcher in the background
-	ui.Info("Starting Tailwind CSS watcher and development server...")
-	
-	// Create a channel to catch signals
-	done := make(chan struct{})
-
-	// Start Tailwind CSS watcher in a goroutine
-	go func() {
-		defer close(done)
-		
-		tailwindCmd := exec.Command("npm", "run", "dev")
-		tailwindCmd.Stdout = os.Stdout
-		tailwindCmd.Stderr = os.Stderr
-		tailwindCmd.Dir = sitePath
-		
-		err := tailwindCmd.Start()
-		if err != nil {
-			ui.Error(fmt.Sprintf("Failed to start Tailwind CSS watcher: %v", err))
-			return
-		}
-		
-		// Wait for the process to finish (which won't happen unless there's an error)
-		tailwindCmd.Wait()
-	}()
-
-	// Give Tailwind a moment to start
-	time.Sleep(1 * time.Second)
-
-	// Initialize the server (default port: 8080)
-	port := 8080
-	server := server.NewServer(cfg, port, true) // true = quiet mode
-
-	// Start the server
-	err = server.Start(sitePath)
-	if err != nil {
-		return fmt.Errorf("server failed: %w", err)
-	}
-
-	return nil
+	return a.cmdServe(args)
 }
 
 
@@ -336,8 +225,12 @@ func (a *App) cmdNew(args []string) error {
 	
 	switch resType {
 	case "site":
-		// For sites, we don't need a name parameter anymore as it will be prompted
-		return a.createNewSite("")
+		// For sites, we need a name parameter
+		if len(args) < 2 {
+			return fmt.Errorf("site command requires a name argument")
+		}
+		siteName := args[1]
+		return a.createNewSite(siteName)
 		
 	case "page":
 		// For pages, second arg is the path
@@ -367,23 +260,23 @@ func (a *App) createNewSite(name string) error {
 
 // createNewPost creates a new blog post
 func (a *App) createNewPost(initialTitle string, customPath string) error {
-	ui.Header("Create New Post")
+	Header("Create New Post")
 
 	// Prompt for post title
 	title := initialTitle
 	if title == "" {
-		title = ui.PromptWithValidation("Post Title", "", ui.Required("Post title"))
+		title = PromptWithValidation("Post Title", "", Required("Post title"))
 	}
 
 	// Prompt for description (optional)
-	description := ui.Prompt("Description (optional)", "")
+	description := Prompt("Description (optional)", "")
 
 	// Prompt for tags
 	defaultTags := []string{"uncategorized"}
-	tags := ui.PromptTags("Tags (comma-separated)", defaultTags)
+	tags := PromptTags("Tags (comma-separated)", defaultTags)
 
 	// Prompt for draft status
-	draft := ui.ConfirmYesNo("Save as draft?", false)
+	draft := ConfirmYesNo("Save as draft?", false)
 
 	// Create content creator
 	creator := content.NewCreator(".")
@@ -394,25 +287,25 @@ func (a *App) createNewPost(initialTitle string, customPath string) error {
 		return fmt.Errorf("failed to create post: %w", err)
 	}
 
-	ui.Success(fmt.Sprintf("Post created successfully: %s", filePath))
+	Success(fmt.Sprintf("Post created successfully: %s", filePath))
 	return nil
 }
 
 // createNewPage creates a new static page
 func (a *App) createNewPage(initialTitle string, customPath string) error {
-	ui.Header("Create New Page")
+	Header("Create New Page")
 
 	// Prompt for page title
 	title := initialTitle
 	if title == "" {
-		title = ui.PromptWithValidation("Page Title", "", ui.Required("Page title"))
+		title = PromptWithValidation("Page Title", "", Required("Page title"))
 	}
 
 	// Prompt for description (optional)
-	description := ui.Prompt("Description (optional)", "")
+	description := Prompt("Description (optional)", "")
 
 	// Prompt for draft status
-	draft := ui.ConfirmYesNo("Save as draft?", false)
+	draft := ConfirmYesNo("Save as draft?", false)
 
 	// Create content creator
 	creator := content.NewCreator(".")
@@ -423,13 +316,13 @@ func (a *App) createNewPage(initialTitle string, customPath string) error {
 		return fmt.Errorf("failed to create page: %w", err)
 	}
 
-	ui.Success(fmt.Sprintf("Page created successfully: %s", filePath))
+	Success(fmt.Sprintf("Page created successfully: %s", filePath))
 	return nil
 }
 
 // createNewContent creates generic content at a specific path
 func (a *App) createNewContent(customPath string, initialTitle string) error {
-	ui.Header("Create New Content")
+	Header("Create New Content")
 	
 	// Determine if we should use post or page format
 	contentType := content.PageType
@@ -441,24 +334,24 @@ func (a *App) createNewContent(customPath string, initialTitle string) error {
 	title := initialTitle
 	if title == "" {
 		if contentType == content.PostType {
-			title = ui.PromptWithValidation("Post Title", "", ui.Required("Post title"))
+			title = PromptWithValidation("Post Title", "", Required("Post title"))
 		} else {
-			title = ui.PromptWithValidation("Content Title", "", ui.Required("Content title"))
+			title = PromptWithValidation("Content Title", "", Required("Content title"))
 		}
 	}
 
 	// Prompt for description (optional)
-	description := ui.Prompt("Description (optional)", "")
+	description := Prompt("Description (optional)", "")
 
 	// Prompt for tags if it's a post
 	var tags []string
 	if contentType == content.PostType {
 		defaultTags := []string{"uncategorized"}
-		tags = ui.PromptTags("Tags (comma-separated)", defaultTags)
+		tags = PromptTags("Tags (comma-separated)", defaultTags)
 	}
 
 	// Prompt for draft status
-	draft := ui.ConfirmYesNo("Save as draft?", false)
+	draft := ConfirmYesNo("Save as draft?", false)
 
 	// Create content creator
 	creator := content.NewCreator(".")
@@ -469,7 +362,7 @@ func (a *App) createNewContent(customPath string, initialTitle string) error {
 		return fmt.Errorf("failed to create content: %w", err)
 	}
 
-	ui.Success(fmt.Sprintf("Content created successfully: %s", filePath))
+	Success(fmt.Sprintf("Content created successfully: %s", filePath))
 	return nil
 }
 

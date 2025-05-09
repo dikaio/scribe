@@ -44,31 +44,15 @@ func extractContentPath(filePath string, slug string) string {
 		return slug
 	}
 	
-	// Special case for posts directory to maintain backward compatibility
-	if strings.HasPrefix(dir, "posts") && filepath.Dir(dir) == "." {
-		return filepath.Join("posts", slug)
+	// Handle subdirectories correctly
+	// Keep directory structure for all content
+	if dir != "." {
+		return filepath.Join(dir, slug)
 	}
 	
-	// If a custom slug is provided (different from the filename without extension),
-	// use it instead of the filename
-	if slug != "" {
-		baseName := filepath.Base(filePath)
-		extName := filepath.Ext(baseName)
-		fileNameWithoutExt := strings.TrimSuffix(baseName, extName)
-		
-		// If the slug differs from the filename, use the provided slug
-		if slug != fileNameWithoutExt {
-			return filepath.Join(dir, slug)
-		}
-	}
-	
-	// For normal cases where slug matches the filename without extension
-	baseName := filepath.Base(filePath)
-	extName := filepath.Ext(baseName)
-	fileNameWithoutExt := strings.TrimSuffix(baseName, extName)
-	
-	// Join directory with filename (no extension) for the final URL
-	return filepath.Join(dir, fileNameWithoutExt)
+	// For all cases, use the slug (which is either the custom slug provided 
+	// in frontmatter or the filename without extension)
+	return filepath.Join(dir, slug)
 }
 
 func LoadPage(filePath string, baseURL string) (Page, error) {
@@ -90,7 +74,15 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 	html := MarkdownToHTML(content)
 
 	// Determine if it's a post based on the path
-	isPost := strings.Contains(filePath, "/posts/")
+	// A file is a post if it's in any directory named "posts"
+	relativePath := filePath
+	contentIdx := strings.Index(filePath, "/content/")
+	if contentIdx >= 0 {
+		relativePath = filePath[contentIdx+9:] // +9 for "/content/"
+	}
+	
+	isPost := strings.HasPrefix(relativePath, "posts/") || 
+		strings.Contains(relativePath, "/posts/")
 
 	// Generate slug from filename if not specified
 	slug := frontMatter.Slug
