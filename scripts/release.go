@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -248,7 +245,7 @@ func initGoMod() error {
 // getCurrentVersion gets the current version from the Go code
 func getCurrentVersion() (string, error) {
 	cliCodePath := "pkg/cli/cli.go"
-	data, err := ioutil.ReadFile(cliCodePath)
+	data, err := os.ReadFile(cliCodePath)
 	if err != nil {
 		return "", err
 	}
@@ -393,7 +390,7 @@ func getCommitsByType(gitLogRange string, types ...string) ([]string, error) {
 // updateVersionInCode updates the version in cli.go
 func updateVersionInCode(newVersion string) error {
 	filePath := "pkg/cli/cli.go"
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
@@ -402,7 +399,7 @@ func updateVersionInCode(newVersion string) error {
 	re := regexp.MustCompile(`(Version\s*=\s*)"v[0-9]+\.[0-9]+\.[0-9]+"`)
 	updated := re.ReplaceAll(data, []byte(fmt.Sprintf(`$1"v%s"`, newVersion)))
 
-	return ioutil.WriteFile(filePath, updated, 0644)
+	return os.WriteFile(filePath, updated, 0644)
 }
 
 // updateChangelog updates or creates the CHANGELOG.md file
@@ -410,18 +407,18 @@ func updateChangelog(content string) error {
 	changelogPath := "CHANGELOG.md"
 	if fileExists(changelogPath) {
 		// Read existing changelog
-		data, err := ioutil.ReadFile(changelogPath)
+		data, err := os.ReadFile(changelogPath)
 		if err != nil {
 			return err
 		}
 
 		// Prepend new content to existing content
 		updatedContent := content + string(data)
-		return ioutil.WriteFile(changelogPath, []byte(updatedContent), 0644)
+		return os.WriteFile(changelogPath, []byte(updatedContent), 0644)
 	}
 
 	// Create new changelog
-	return ioutil.WriteFile(changelogPath, []byte(content), 0644)
+	return os.WriteFile(changelogPath, []byte(content), 0644)
 }
 
 // revertChanges reverts changes for dry run
