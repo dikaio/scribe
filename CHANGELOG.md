@@ -1,3 +1,20 @@
+## v0.7.0 (2025-05-08)
+
+### Features
+
+- feat: add release tasks to Taskfile
+- feat: add Go implementation of release script
+
+### Bug Fixes
+
+- fix: remove unused path/filepath import from release script
+- fix: improve project directory detection in release script
+- fix: update release script to fix compilation errors
+
+### Other Changes
+
+- docs: add release documentation and update CLAUDE.md
+
 ## v0.5.2 (2025-05-07)
 
 ### Bug Fixes
