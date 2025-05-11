@@ -12,6 +12,7 @@ import (
 	"github.com/dikaio/scribe/internal/config"
 	"github.com/dikaio/scribe/internal/content"
 	"github.com/dikaio/scribe/internal/render"
+	"github.com/dikaio/scribe/internal/sitemap"
 )
 
 // Builder handles site building
@@ -85,6 +86,12 @@ func (b *Builder) Build(sitePath string) error {
 	if err := b.generateHomePage(outputPath); err != nil {
 		return err
 	}
+
+	// Generate sitemap
+	if err := b.generateSitemap(outputPath); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -125,7 +132,7 @@ func (b *Builder) loadContent(sitePath string) error {
 			filePath := job.(string)
 			
 			// Load page
-			page, err := content.LoadPage(filePath, b.config.BaseURL)
+			page, err := content.LoadPage(filePath, b.config.BaseURL, b.config.TrailingSlash)
 			if err != nil {
 				errChan <- fmt.Errorf("error loading %s: %v", filePath, err)
 				continue
@@ -479,4 +486,33 @@ func copyFile(src, dst string) error {
 	// Copy content
 	_, err = io.Copy(dstFile, srcFile)
 	return err
+}
+
+// generateSitemap generates a sitemap.xml file for the site
+func (b *Builder) generateSitemap(outputPath string) error {
+	// Create sitemap generator
+	generator := sitemap.NewGenerator(b.config)
+
+	// Generate sitemap.xml
+	sitemapPath := filepath.Join(outputPath, "sitemap.xml")
+
+	// Only include non-draft pages in the sitemap
+	allPages := b.pages
+
+	// Log sitemap generation if not in quiet mode
+	if !b.quiet {
+		fmt.Println("Generating sitemap.xml...")
+	}
+
+	// Generate the sitemap
+	err := generator.Generate(allPages, sitemapPath)
+	if err != nil {
+		return fmt.Errorf("failed to generate sitemap: %w", err)
+	}
+
+	if !b.quiet {
+		fmt.Println("Sitemap generated successfully at sitemap.xml")
+	}
+
+	return nil
 }
