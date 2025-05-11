@@ -1,3 +1,22 @@
+## v0.8.0 (2025-05-11)
+
+### Features
+
+- feat: add default starter template
+- feat: add URL configuration for trailing slashes
+- feat: switch to YAML for configuration with backward compatibility
+- feat: integrate sitemap generation into build process
+- feat: add XML sitemap generation
+
+### Other Changes
+
+- refactor: move release script to internal package
+- docs: update CLAUDE.md with README.md reference
+- docs: update documentation for YAML configuration
+- chore: add gopkg.in/yaml.v3 dependency
+- chore: remove deprecated bash release script
+- test: add comprehensive routing tests
+
 ## v0.7.0 (2025-05-08)
 
 ### Features
