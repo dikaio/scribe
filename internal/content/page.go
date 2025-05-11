@@ -55,7 +55,7 @@ func extractContentPath(filePath string, slug string) string {
 	return filepath.Join(dir, slug)
 }
 
-func LoadPage(filePath string, baseURL string) (Page, error) {
+func LoadPage(filePath string, baseURL string, trailingSlash bool) (Page, error) {
 	var page Page
 
 	// Read file content
@@ -80,8 +80,8 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 	if contentIdx >= 0 {
 		relativePath = filePath[contentIdx+9:] // +9 for "/content/"
 	}
-	
-	isPost := strings.HasPrefix(relativePath, "posts/") || 
+
+	isPost := strings.HasPrefix(relativePath, "posts/") ||
 		strings.Contains(relativePath, "/posts/")
 
 	// Generate slug from filename if not specified
@@ -96,10 +96,17 @@ func LoadPage(filePath string, baseURL string) (Page, error) {
 	// Determine URL from the file path, preserving directory structure
 	url := extractContentPath(filePath, slug)
 
-	// Add trailing slash for cleaner URLs (remove .html extension)
-	// but don't add double slashes
-	if !strings.HasSuffix(url, "/") {
-		url = url + "/"
+	// Handle trailing slash based on configuration
+	if trailingSlash {
+		// Add trailing slash for clean URLs if not already present
+		if !strings.HasSuffix(url, "/") {
+			url = url + "/"
+		}
+	} else {
+		// Remove trailing slash if present (unless it's the root URL which is just "/")
+		if url != "/" && strings.HasSuffix(url, "/") {
+			url = strings.TrimSuffix(url, "/")
+		}
 	}
 
 	// For permalinks, join baseURL and url properly
