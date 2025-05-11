@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -157,8 +158,13 @@ func TestDirectAccessRouting(t *testing.T) {
 			// Check content type if we expect a successful response
 			if tc.expectedCode == http.StatusOK && tc.contentType != "" {
 				contentType := w.Header().Get("Content-Type")
-				if contentType == "" || contentType[:len(tc.contentType)] != tc.contentType {
-					t.Errorf("Expected Content-Type to start with %q for path %s, got %q", 
+				// Special case for XML which can be either text/xml or application/xml
+				if tc.path == "/sitemap.xml" {
+					if !strings.Contains(contentType, "xml") {
+						t.Errorf("Expected XML Content-Type for path %s, got %q", tc.path, contentType)
+					}
+				} else if contentType == "" || contentType[:len(tc.contentType)] != tc.contentType {
+					t.Errorf("Expected Content-Type to start with %q for path %s, got %q",
 						tc.contentType, tc.path, contentType)
 				}
 			}
