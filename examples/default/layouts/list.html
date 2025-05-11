@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ .Title }} - {{ .Site.Title }}</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ .Site.Title }}</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about/">About</a>
+            <a href="/posts/">Blog</a>
+            <a href="/contact/">Contact</a>
+        </nav>
+    </header>
+    <main>
+        <h1>{{ .Title }}</h1>
+        
+        <ul>
+            {{ range .Pages }}
+            <li>
+                <h2><a href="{{ .URL }}">{{ .Title }}</a></h2>
+                <p>{{ .Description }}</p>
+            </li>
+            {{ end }}
+        </ul>
+    </main>
+    <footer>
+        <p>&copy; 2023 {{ .Site.Author }}</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+title: My Scribe Site
+baseURL: http://example.com/
+theme: default
+language: en
+contentDir: content
+layoutDir: layouts
+staticDir: static
+outputDir: public
+author: Your Name
+description: A beautiful site built with Scribe
+summaryLength: 70
+trailingSlash: true
+tags:
+  - blog
+  - portfolio
+  - personal

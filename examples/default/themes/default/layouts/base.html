@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ if .Page.Title }}{{ .Page.Title }} | {{ end }}{{ .Site.Title }}</title>
+    <meta name="description" content="{{ if .Page.Description }}{{ .Page.Description }}{{ else }}{{ .Site.Description }}{{ end }}">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico">
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ if .Page.Title }}{{ .Page.Title }}{{ else }}{{ .Site.Title }}{{ end }}">
+    <meta property="og:description" content="{{ if .Page.Description }}{{ .Page.Description }}{{ else }}{{ .Site.Description }}{{ end }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ .Page.Permalink }}">
+</head>
+<body>
+    <header>
+        <div class="site-title">
+            <a href="/">{{ .Site.Title }}</a>
+        </div>
+        <nav id="nav-menu">
+            <a href="/">Home</a>
+            <a href="/about/">About</a>
+            <a href="/posts/">Blog</a>
+            <a href="/contact/">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        {{ block "content" . }}{{ end }}
+    </main>
+
+    <footer>
+        <p>&copy; <span id="current-year">2023</span> {{ .Site.Author }}</p>
+        <p>Built with <a href="https://github.com/dikaio/scribe" target="_blank">Scribe</a></p>
+    </footer>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
