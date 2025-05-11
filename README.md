@@ -79,7 +79,7 @@ The development server will automatically detect changes and reload.
 
 ```
 mysite/
-├── config.jsonc       # Site configuration
+├── config.yml         # Site configuration (YAML format)
 ├── content/           # Content files (Markdown)
 │   ├── posts/         # Blog posts (displayed in blog index)
 │   ├── articles/      # Example custom content section
@@ -115,23 +115,44 @@ This is the body of the post written in Markdown.
 
 ## Configuration
 
-Site configuration is stored in `config.jsonc`:
+Site configuration is stored in `config.yml`:
 
-```json
-{
-  "title": "My Scribe Site",
-  "baseURL": "http://example.com/",
-  "theme": "default",
-  "language": "en",
-  "contentDir": "content",
-  "layoutDir": "layouts",
-  "staticDir": "static",
-  "outputDir": "public",
-  "author": "Your Name",
-  "description": "Your site description",
-  "summaryLength": 70
-}
+```yaml
+title: My Scribe Site
+baseURL: http://example.com/
+theme: default
+language: en
+contentDir: content
+layoutDir: layouts
+staticDir: static
+outputDir: public
+author: Your Name
+description: Your site description
+summaryLength: 70
+trailingSlash: true
+tags:
+  - example
+  - blog
 ```
+
+For backward compatibility, Scribe also supports JSON configuration with `config.jsonc` or `config.json`, but YAML is now the preferred format.
+
+### Configuration Options
+
+- **title**: The title of your site (used in templates)
+- **baseURL**: The base URL for your site (for generating permalinks)
+- **theme**: The theme to use
+- **language**: The site language code
+- **contentDir**: Directory for content files (default: "content")
+- **layoutDir**: Directory for layout templates (default: "layouts")
+- **staticDir**: Directory for static files (default: "static")
+- **outputDir**: Directory for generated output (default: "public")
+- **author**: Site author name
+- **description**: Site description
+- **summaryLength**: Length of content summaries (default: 70)
+- **trailingSlash**: Controls whether URLs end with a trailing slash (default: true)
+  - `true`: URLs end with a trailing slash (e.g., `/about/`)
+  - `false`: URLs have no trailing slash (e.g., `/about`)
 
 ## Commands
 
@@ -283,7 +304,7 @@ Optimizations we're actively working on:
 - [x] **Template Caching**: Pre-compile and cache templates for improved performance
 - [ ] Implement plugin architecture
 - [ ] Responsive Images (similar to Next.js Image component)
-- [ ] Sitemap generation
+- [x] Sitemap generation
 - [ ] SEO Optimizations
 - [ ] Add support for advanced content features like series and custom taxonomies
 - [ ] Add more test coverage for all components
